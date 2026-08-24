@@ -1,0 +1,2265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LM Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+:root{--navy:#17365d;--blue:#2f75b5;--bg:#f4f7fb;--card:#fff;--text:#1f2937;--muted:#64748b;--red:#c00000;--border:#e5e7eb;--input:#fff}body.dark{--navy:#0b1220;--blue:#3b82f6;--bg:#0f172a;--card:#111827;--text:#e5e7eb;--muted:#94a3b8;--red:#f87171;--border:#334155;--input:#1e293b}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--navy);color:white;padding:18px 24px}.headrow{display:flex;justify-content:space-between;align-items:center;gap:16px} header h1{margin:0;font-size:23px} header p{margin:5px 0 0;opacity:.85}.themeToggle{min-width:44px;padding:8px 10px;background:#ffffff20;border:1px solid #ffffff40;font-size:16px}.sortbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px}.sortbar button{padding:6px 10px;font-size:12px}.sortbar button.active{outline:2px solid var(--navy);font-weight:700}
+.wrap{max-width:1500px;margin:auto;padding:20px}
+.upload{background:var(--card);border:2px dashed #9fb7d1;border-radius:14px;padding:24px;text-align:center;margin-bottom:18px}
+input[type=file]{margin:10px}.controls{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+select,input[type=search]{padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--input);color:var(--text)}
+.cards{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:12px;margin:16px 0}
+.card{background:var(--card);border-radius:12px;padding:15px;box-shadow:0 2px 8px #0000000c}.card small{color:var(--muted)}.card strong{display:block;font-size:24px;margin-top:6px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 2px 8px #0000000c;overflow:auto}
+.panel h3{margin:0 0 12px;color:var(--navy)}canvas{max-height:340px}
+table{width:100%;border-collapse:collapse;font-size:13px}th{position:sticky;top:0;background:var(--navy);color:white;text-align:left}th,td{padding:8px;border-bottom:1px solid var(--border);white-space:nowrap}
+.bad{color:var(--red);font-weight:700}.muted{color:var(--muted)}button{background:var(--blue);color:white;border:0;border-radius:8px;padding:9px 14px;cursor:pointer}
+#status{margin-top:8px;color:var(--muted)}
+@media(max-width:1000px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+
+/* V14 visual refinement */
+body{transition:background .2s ease,color .2s ease}
+body.dark{
+ --navy:#08111f;--blue:#3b82f6;--bg:#0b1220;--card:#111c2e;
+ --text:#f1f5f9;--muted:#9fb0c6;--red:#fb7185;--border:#26364d;--input:#172338
+}
+body.dark header{background:#07101d;border-bottom:1px solid #203047;box-shadow:0 4px 18px #00000035}
+body.dark .wrap{background:transparent}
+body.dark .panel{
+ background:linear-gradient(180deg,#111c2e 0%,#0f1929 100%);
+ border:1px solid #22324a;box-shadow:0 10px 28px #00000022
+}
+body.dark .panel h3{color:#f8fafc}
+body.dark .card{
+ background:linear-gradient(145deg,#152238,#101a2b);
+ border:1px solid #22344e;box-shadow:0 8px 22px #00000024;
+ transition:transform .15s ease,border-color .15s ease
+}
+body.dark .card:hover{transform:translateY(-2px);border-color:#3b82f6}
+body.dark .card small{color:#9fc5f8;font-weight:500;letter-spacing:.1px}
+body.dark .card strong{color:#f8fafc}
+body.dark .muted{color:#9fb0c6}
+body.dark select,body.dark input[type=search]{
+ background:#172338;color:#eaf2ff;border:1px solid #31445f;
+ box-shadow:inset 0 1px 0 #ffffff08
+}
+body.dark select:focus,body.dark input[type=search]:focus{outline:2px solid #3b82f680;border-color:#60a5fa}
+body.dark button{background:#2563eb;box-shadow:0 4px 12px #00000022}
+body.dark button:hover{background:#3b82f6}
+body.dark .themeToggle{background:#172338;border-color:#3b4d68}
+body.dark table{border:1px solid #22324a;border-radius:8px;overflow:hidden}
+body.dark th{background:#081321;color:#f8fafc;border-bottom:1px solid #354966}
+body.dark td{color:#e5edf8;border-bottom:1px solid #26364d}
+body.dark tbody tr:nth-child(even){background:#ffffff025}
+body.dark tbody tr:hover{background:#1a2940}
+body.dark .bad{color:#fb7185}
+body.dark #avtdTable td:last-child{color:#86efac;font-weight:700}
+body.dark #avtdTable tbody tr:hover td:last-child{color:#bbf7d0}
+body.dark .sortbar button.active{outline:1px solid #60a5fa;background:#2563eb}
+body.dark .upload{background:#111c2e;border-color:#365071}
+body.dark canvas{filter:brightness(1.06)}
+@media(min-width:1001px){
+ body.dark .cards{gap:14px}
+ body.dark .card{min-height:92px;padding:18px}
+}
+
+
+body.exporting .upload,body.exporting header .themeToggle,body.exporting .eod-hide{display:none!important}
+body.exporting .wrap{max-width:1500px}
+body.exporting .panel,body.exporting .card{break-inside:avoid}
+body.exporting .sortbar{display:none!important}
+#eodStamp{display:none}
+body.exporting #eodStamp{display:block;margin:0 0 14px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--card);font-weight:700}
+
+
+/* V17 dark theme inspired by supplied reference */
+body.dark{
+ --navy:#0d1421;
+ --blue:#47a9a1;
+ --bg:#0f1724;
+ --card:#151e2e;
+ --text:#f5f1e8;
+ --muted:#91a0b8;
+ --red:#d85f3c;
+ --border:#334055;
+ --input:#182337;
+}
+body.dark{font-family:Inter,Segoe UI,Arial,sans-serif;background:#0f1724;color:#f5f1e8}
+body.dark header{background:#0d1421;border-bottom:1px solid #303c50}
+body.dark header h1,body.dark .panel h3,body.dark .card strong{
+ font-family:"Roboto Condensed",Inter,sans-serif;font-weight:700;color:#fffaf0
+}
+body.dark .panel{
+ background:#151e2e;border:1px solid #344055;border-radius:6px;
+ box-shadow:none
+}
+body.dark .card{
+ background:#151e2e;border:1px solid #2d394d;border-radius:6px;box-shadow:none
+}
+body.dark .card:hover{transform:none;border-color:#47a9a1}
+body.dark .card small{
+ color:#9aa9c0;font-family:Inter,sans-serif;font-size:12px;text-transform:none
+}
+body.dark .card strong{font-size:25px}
+body.dark table{border:0;border-radius:0}
+body.dark th{
+ background:#111a29;color:#fffaf0;border-bottom:1px solid #3a475d;
+ font-family:"Roboto Condensed",Inter,sans-serif;font-weight:700
+}
+body.dark td{color:#edf1f7;border-bottom:1px solid #334055}
+body.dark tbody tr:nth-child(even){background:#ffffff018}
+body.dark tbody tr:hover{background:#1b2739}
+body.dark select,body.dark input[type=search]{
+ background:#182337;color:#f1f5f9;border:1px solid #35445b;border-radius:6px
+}
+body.dark button{background:#eba637;color:#111827;border-radius:6px;box-shadow:none;font-weight:600}
+body.dark button:hover{background:#f0b34f}
+body.dark #reset{background:#eba637;color:#111827}
+body.dark .themeToggle{background:#182337;color:#f5f1e8;border-color:#3b4960}
+body.dark .sortbar button.active{background:#eba637;color:#111827;outline:none}
+body.dark .bad{color:#e56a46}
+body.dark #avtdTable td:last-child{color:#4baaa2}
+body.dark .muted{color:#91a0b8}
+body.dark canvas{filter:none}
+body.dark .upload{background:#151e2e;border-color:#3b4960}
+body.dark .panel h3{font-size:16px;letter-spacing:.1px}
+body.dark .panel h3::before{
+ content:"";display:inline-block;width:3px;height:15px;background:#eba637;
+ margin-right:8px;vertical-align:-2px;border-radius:2px
+}
+/* Accent labels reminiscent of the reference dashboard */
+body.dark #avtdTable th{border-top:2px solid #eba637}
+body.dark .cards .card:nth-child(3n+1){border-top:2px solid #eba637}
+body.dark .cards .card:nth-child(3n+2){border-top:2px solid #47a9a1}
+body.dark .cards .card:nth-child(3n){border-top:2px solid #8a7fd1}
+
+
+/* V18: restore original dashboard typography; retain V17 dark colors */
+body.dark{font-family:Segoe UI,Arial,sans-serif}
+body.dark header h1,body.dark .panel h3,body.dark .card strong,
+body.dark th{
+ font-family:Segoe UI,Arial,sans-serif
+}
+
+
+
+/* LM AVTD overall KPI */
+.overallAvtdCard{border-top:2px solid #17365d}
+body.dark .overallAvtdCard{border-top:2px solid #eba637}
+@media(max-width:1100px){
+  #app .panel:first-of-type .cards[style*="repeat(5"]{grid-template-columns:repeat(3,minmax(170px,1fr))!important}
+}
+@media(max-width:768px){
+  #app .panel:first-of-type .cards[style*="repeat(5"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+
+/* V19 Mobile responsive layout */
+@media(max-width:768px){
+ body{font-size:14px}
+ header{padding:14px 12px}
+ .headrow{align-items:flex-start}
+ header h1{font-size:19px}
+ header p{font-size:12px;line-height:1.4}
+ .themeToggle{min-width:40px;padding:7px}
+
+ .wrap{padding:10px;width:100%;overflow:hidden}
+ .upload{padding:15px 10px;margin-bottom:12px}
+ .upload input[type=file]{max-width:100%;font-size:12px}
+
+ /* AVTD cards: 2 per row on mobile */
+ .cards,
+ .panel .cards,
+ .panel .cards[style]{
+   grid-template-columns:repeat(2,minmax(0,1fr))!important;
+   gap:8px!important;
+ }
+ .card{padding:12px!important;min-height:82px!important;border-radius:8px}
+ .card small{font-size:11px;line-height:1.25;display:block}
+ .card strong{font-size:21px!important;margin-top:5px}
+ .card .muted{font-size:10px;line-height:1.3;margin-top:3px}
+
+ /* Filters become easy-to-tap stacked controls */
+ .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+ .controls select,.controls input[type=search],.controls button{
+   width:100%;min-width:0;height:42px;margin:0;font-size:12px
+ }
+ .controls select:first-child{grid-column:1/-1}
+ .controls input[type=search]{grid-column:1/-1}
+
+ /* Analysis panels stack */
+ .grid{grid-template-columns:1fr;gap:10px}
+ .panel{padding:12px;border-radius:8px;max-width:100%;overflow-x:auto}
+ .panel h3{font-size:15px;margin-bottom:10px}
+
+ /* Tables scroll horizontally instead of squeezing columns */
+ table{min-width:650px;font-size:11px}
+ th,td{padding:7px 8px}
+ #avtdTable table{min-width:540px}
+ .sortbar{position:sticky;left:0;gap:6px}
+ .sortbar button{font-size:11px;padding:6px 9px}
+
+ canvas{max-width:100%!important;max-height:280px!important}
+
+ #eodStamp{font-size:12px}
+}
+
+@media(max-width:480px){
+ .wrap{padding:7px}
+ header h1{font-size:17px}
+ header p{display:none}
+
+ .cards,
+ .panel .cards,
+ .panel .cards[style]{
+   grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+ .card{padding:10px!important;min-height:76px!important}
+ .card strong{font-size:19px!important}
+
+ .controls{grid-template-columns:1fr}
+ .controls select:first-child,.controls input[type=search]{grid-column:auto}
+
+ .panel{padding:10px}
+ table{font-size:10.5px}
+ th,td{padding:7px 6px}
+}
+
+/* EOD image keeps desktop report proportions even if downloaded from mobile */
+body.exporting #app{width:1600px!important;min-width:1600px!important;max-width:1600px!important;margin:0 auto!important}
+body.exporting .wrap{width:1600px!important;max-width:1600px!important;padding:18px!important}
+body.exporting .cards,
+body.exporting .panel .cards,
+body.exporting .panel .cards[style]{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+body.exporting .grid{grid-template-columns:1fr 1fr!important}
+body.exporting .panel{overflow:visible!important}
+body.exporting table{font-size:12px!important}
+body.exporting th,body.exporting td{padding:7px 6px!important}
+body.exporting .card{min-height:82px!important;padding:14px!important}
+
+
+/* V20 password gate */
+#loginGate{
+ position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
+ background:#0f1724;padding:20px
+}
+.loginBox{
+ width:min(390px,100%);background:#151e2e;border:1px solid #334055;border-radius:12px;
+ padding:28px;box-shadow:0 20px 60px #00000055;color:#f5f1e8
+}
+.loginBox h2{margin:0 0 7px;font-size:22px}
+.loginBox p{margin:0 0 18px;color:#91a0b8;font-size:13px;line-height:1.45}
+.loginBox input{
+ width:100%;height:44px;padding:0 12px;background:#182337;color:#fff;border:1px solid #3b4960;
+ border-radius:7px;margin-bottom:10px;font:inherit
+}
+.loginBox button{width:100%;height:44px;background:#eba637;color:#111827;font-weight:700}
+#loginError{min-height:20px;margin-top:9px;color:#fb7185;font-size:12px}
+body.locked>header,body.locked>.wrap{display:none!important}
+
+
+/* V24: LM analysis layout - failure/flare side-by-side, VN best/bottom below */
+.analysisTopGrid,.vnPerformanceGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.analysisTopGrid .panel,.vnPerformanceGrid .panel{min-width:0}
+.vnSortBar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
+.vnSortBar select{padding:7px 9px;border:1px solid var(--border);border-radius:7px;background:var(--input);color:var(--text);font-size:12px}
+.vnBestBadge{color:#16803a;font-weight:700}.vnBottomBadge{color:var(--red);font-weight:700}
+@media(max-width:1000px){.analysisTopGrid,.vnPerformanceGrid{grid-template-columns:1fr}}
+
+/* V22: wrap analysis tables instead of horizontal scrolling */
+#vnTable, #clientTable, #flareTable, #reasonTable {overflow-x:visible!important; width:100%}
+#vnTable table, #clientTable table, #flareTable table, #reasonTable table{
+  width:100%!important;
+  min-width:0!important;
+  table-layout:fixed;
+}
+#vnTable th, #clientTable th, #flareTable th, #reasonTable th{
+  white-space:normal!important;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  line-height:1.2;
+  vertical-align:middle;
+}
+#vnTable td, #clientTable td, #flareTable td, #reasonTable td{
+  white-space:normal!important;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  line-height:1.25;
+}
+#vnTable th:first-child, #vnTable td:first-child,
+#clientTable th:first-child, #clientTable td:first-child,
+#flareTable th:first-child, #flareTable td:first-child,
+#reasonTable th:first-child, #reasonTable td:first-child{width:24%}
+#vnTable th:not(:first-child), #vnTable td:not(:first-child),
+#clientTable th:not(:first-child), #clientTable td:not(:first-child),
+#flareTable th:not(:first-child), #flareTable td:not(:first-child){width:15.2%}
+@media(max-width:768px){
+  #vnTable table, #clientTable table, #flareTable table, #reasonTable table{
+    min-width:0!important;
+    font-size:10px;
+  }
+  #vnTable th, #clientTable th, #flareTable th, #reasonTable th,
+  #vnTable td, #clientTable td, #flareTable td, #reasonTable td{
+    padding:6px 4px;
+  }
+}
+
+
+/* V23: stronger KPI headings for dark mode */
+body.dark .card small{
+  color:#f8fafc!important;
+  font-weight:700!important;
+  font-size:13px!important;
+  line-height:1.3!important;
+  opacity:1!important;
+}
+body.dark .card .muted{
+  color:#cbd5e1!important;
+  opacity:1!important;
+}
+body.dark .card strong{
+  color:#fffaf0!important;
+  font-weight:700!important;
+}
+@media(max-width:768px){
+  body.dark .card small{font-size:12px!important}
+}
+
+
+/* V24 performance threshold alerts */
+.threshold-bad{color:#ff5c5c!important;font-weight:700!important}
+.threshold-good{color:#47c7bd!important;font-weight:700!important}
+
+/* V29: optimized 16:10 EOD report */
+body.exporting #app{
+ width:1560px!important;min-width:1560px!important;max-width:1560px!important;
+ margin:0 auto!important;padding:0!important
+}
+body.exporting .wrap{width:1560px!important;max-width:1560px!important;padding:8px!important}
+body.exporting #eodStamp{margin:0 0 8px!important;padding:8px 12px!important;font-size:15px!important}
+body.exporting .panel{padding:10px!important;margin-bottom:8px!important}
+body.exporting .panel h3{font-size:17px!important;margin:0 0 8px!important}
+body.exporting .cards,
+body.exporting .panel .cards,
+body.exporting .panel .cards[style]{
+ grid-template-columns:repeat(6,minmax(0,1fr))!important;
+ gap:8px!important;margin:6px 0 8px!important
+}
+body.exporting .card{
+ min-height:68px!important;padding:10px 12px!important
+}
+body.exporting .card small{font-size:12px!important}
+body.exporting .card strong{font-size:24px!important;margin-top:3px!important}
+body.exporting .card .muted{font-size:11px!important}
+body.exporting .grid{grid-template-columns:1fr 1fr!important;gap:8px!important}
+body.exporting table{font-size:12px!important;line-height:1.15!important}
+body.exporting th,body.exporting td{padding:5px 6px!important}
+body.exporting .muted{font-size:10px!important}
+body.exporting .sortbar{display:none!important}
+
+
+/* V30: maximize readability and canvas usage in EOD */
+body.exporting #app{
+ width:1580px!important;min-width:1580px!important;max-width:1580px!important;
+ margin:0 auto!important
+}
+body.exporting .wrap{width:1580px!important;max-width:1580px!important;padding:4px!important}
+body.exporting #eodStamp{
+ margin:0 0 6px!important;padding:7px 10px!important;font-size:17px!important
+}
+body.exporting .panel{padding:9px!important;margin-bottom:6px!important}
+body.exporting .panel h3{font-size:20px!important;margin:0 0 7px!important}
+body.exporting .cards,
+body.exporting .panel .cards,
+body.exporting .panel .cards[style]{
+ grid-template-columns:repeat(6,minmax(0,1fr))!important;
+ gap:6px!important;margin:5px 0 6px!important
+}
+body.exporting .card{min-height:62px!important;padding:8px 10px!important}
+body.exporting .card small{font-size:14px!important;font-weight:700!important}
+body.exporting .card strong{font-size:29px!important;line-height:1.05!important}
+body.exporting .card .muted{font-size:13px!important}
+body.exporting .grid{grid-template-columns:1fr 1fr!important;gap:6px!important}
+body.exporting table{font-size:14px!important;line-height:1.12!important}
+body.exporting th{font-size:13px!important}
+body.exporting th,body.exporting td{padding:5px 7px!important}
+body.exporting .muted{font-size:12px!important}
+
+/* AVTD headline metrics larger */
+body.exporting #avtdCards .card strong,
+body.exporting [id*="Avtd"]{font-size:30px!important}
+
+
+/* V31: stronger KPI headings */
+.card small{
+  font-weight:700!important;
+  color:var(--text)!important;
+  opacity:1!important;
+}
+body:not(.dark) .card small{color:#17365d!important}
+body.dark .card small{color:#f8fafc!important}
+
+
+/* V32: EOD analysis capture fix + readability */
+body.exporting #vnTable table,
+body.exporting #reasonTable table,
+body.exporting #flareTable table{
+  width:100%!important;
+  font-size:14px!important;
+}
+body.exporting #vnTable th,
+body.exporting #reasonTable th,
+body.exporting #flareTable th{
+  font-size:13px!important;
+  font-weight:700!important;
+}
+
+
+/* V33 approved EOD/dashboard layout */
+.sectionTitle{
+  font-size:20px;font-weight:800;color:#0b2b55;margin:14px 2px 8px;
+}
+body.dark .sectionTitle{color:#f8fafc}
+.operationalExtras{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.damageCard small,.damageCard strong{color:#ef4444!important}
+
+/* AVTD category table stays compact */
+#avtdTable{margin-top:6px}
+#avtdTable table{font-size:12px!important}
+#avtdTable th,#avtdTable td{padding:5px 7px!important;line-height:1.1!important}
+
+/* EOD follows the same approved composition */
+body.exporting .sectionTitle{
+  font-size:21px!important;font-weight:800!important;margin:7px 2px 6px!important
+}
+body.exporting .operationalExtras{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:7px!important
+}
+body.exporting #avtdTable table{font-size:11px!important}
+body.exporting #avtdTable th,body.exporting #avtdTable td{
+  padding:3px 6px!important;line-height:1.05!important
+}
+body.exporting .damageCard{border-color:#fecaca!important}
+@media(max-width:768px){
+ .operationalExtras{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .sectionTitle{font-size:18px}
+}
+
+
+body.exporting .grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:7px!important
+}
+/* Put the three visible analysis panels across the report width */
+body.exporting .grid:has(#vnTable){
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+
+
+/* V34: Closure Performance KPI cards directly below heading */
+.sectionTitle + .cards{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:12px!important;
+  margin-top:6px!important;
+}
+body.exporting .sectionTitle + .cards{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;
+  margin:4px 0 7px!important;
+}
+@media(max-width:768px){
+  .sectionTitle + .cards{grid-template-columns:1fr!important}
+}
+
+
+/* V35: exact Closure Performance order */
+.closureCards{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:12px!important;
+  margin:8px 0 12px!important;
+}
+body.exporting .closureCards{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;
+  margin:5px 0 7px!important;
+}
+@media(max-width:768px){
+  .closureCards{grid-template-columns:1fr!important}
+}
+
+
+/* V47 Closure KPI waybill drill-down */
+.closureDetailHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.closureEyeBtn{width:32px;height:28px;padding:0!important;border:1px solid var(--border)!important;border-radius:7px!important;background:transparent!important;color:var(--text)!important;font-size:16px!important;line-height:1;cursor:pointer}
+.closureEyeBtn:hover{border-color:#2563eb!important;background:#2563eb12!important}
+body.exporting .closureEyeBtn{display:none!important}
+.closureWaybillModal{position:fixed;inset:0;z-index:2147483647;display:none;align-items:center;justify-content:center;padding:18px;background:#0008}
+.closureWaybillModal.open{display:flex!important}
+.closureWaybillTableWrap table{min-width:760px}.closureWaybillTableWrap th,.closureWaybillTableWrap td{text-align:left}.closureWaybillTableWrap th:first-child,.closureWaybillTableWrap td:first-child{width:48px;text-align:center}.closureAgingBad{color:#d90429!important;font-weight:800}
+.closureWaybillBox{width:min(820px,96vw);max-height:84vh;overflow:hidden;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:12px;box-shadow:0 24px 70px #0006}
+.closureWaybillHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px;border-bottom:1px solid var(--border)}
+.closureWaybillHead h3{margin:0 0 3px;font-size:18px}
+.closureWaybillActions{display:flex;align-items:center;gap:8px}
+.closureWaybillTableWrap{max-height:64vh;overflow:auto;padding:0 12px 12px}
+.closureWaybillTableWrap table{width:100%;min-width:0!important}
+.closureWaybillTableWrap th{position:sticky;top:0;z-index:1}
+body.exporting .closureCopyBtn{display:none!important}
+
+/* V37 Damage MWN drill-down */
+.damageHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.eyeBtn{
+  width:34px;height:30px;padding:0!important;border:1px solid var(--border)!important;
+  border-radius:7px!important;background:transparent!important;color:var(--text)!important;
+  font-size:17px!important;line-height:1;cursor:pointer
+}
+.eyeBtn:hover{border-color:#ef4444!important;background:#ef444412!important}
+.damageModal{
+  position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;
+  padding:18px;background:#0008
+}
+.damageModal.open{display:flex}
+.damageModalBox{
+  width:min(760px,96vw);max-height:82vh;overflow:hidden;background:var(--card);
+  color:var(--text);border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 24px 70px #0006
+}
+.damageModalHead{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+  padding:16px 18px;border-bottom:1px solid var(--border)
+}
+.damageModalHead h3{margin:0 0 3px;font-size:18px}
+.damageClose{
+  width:34px;height:34px;padding:0!important;border-radius:7px!important;
+  background:transparent!important;color:var(--text)!important;border:1px solid var(--border)!important;
+  font-size:24px!important;line-height:1
+}
+.damageTableWrap{max-height:62vh;overflow:auto;padding:0 12px 12px}
+.damageTableWrap table{width:100%;min-width:0!important}
+.damageTableWrap th{position:sticky;top:0;z-index:1}
+body.exporting .eyeBtn{display:none!important}
+@media(max-width:600px){
+  .damageModal{padding:8px}
+  .damageModalBox{width:100%;max-height:90vh}
+  .damageTableWrap{max-height:70vh}
+}
+
+
+/* V38 popup reliability */
+.damageModal{z-index:2147483647!important}
+.damageModal.open{display:flex!important}
+.damageModalBox{position:relative;z-index:2147483647}
+
+
+/* V42 Reset Password */
+.resetPasswordBtn{
+  margin-top:8px!important;background:transparent!important;color:#eba637!important;
+  border:1px solid #eba637!important;box-shadow:none!important
+}
+.resetPasswordBtn:hover{background:#eba63718!important}
+.resetPasswordModal{
+  position:fixed;inset:0;z-index:2147483647;display:none;align-items:center;justify-content:center;
+  padding:18px;background:#000a
+}
+.resetPasswordModal.open{display:flex}
+.resetPasswordBox{
+  width:min(410px,96vw);padding:22px;background:#151e2e;color:#f5f1e8;
+  border:1px solid #334055;border-radius:12px;box-shadow:0 24px 70px #0008
+}
+.resetPasswordHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.resetPasswordHead h3{margin:0;font-size:19px}
+.resetPasswordClose{
+  width:34px!important;height:34px!important;padding:0!important;background:transparent!important;
+  color:#f5f1e8!important;border:1px solid #3b4960!important;font-size:23px!important
+}
+.resetPasswordBox input{
+  width:100%;height:43px;padding:0 11px;margin:6px 0;background:#182337;color:#fff;
+  border:1px solid #3b4960;border-radius:7px;font:inherit;box-sizing:border-box
+}
+.resetPasswordBox #savePasswordBtn{width:100%;height:43px;margin-top:8px}
+#resetPasswordMessage{min-height:20px;margin-top:10px;font-size:12px}
+.resetError{color:#fb7185}
+.resetSuccess{color:#86efac}
+
+
+/* V46 MWN copy action */
+.damageModalActions{display:flex;align-items:center;gap:8px}
+.copyMWNBtn{
+  height:34px!important;padding:0 12px!important;border-radius:7px!important;
+  font-size:12px!important;font-weight:700!important;white-space:nowrap;
+  background:#0b5cab!important;color:#fff!important;border:1px solid #0b5cab!important
+}
+.copyMWNBtn:hover{filter:brightness(1.08)}
+@media(max-width:520px){
+  .damageModalHead{align-items:flex-start}
+  .damageModalActions{flex-direction:column-reverse;align-items:flex-end}
+  .copyMWNBtn{height:32px!important;padding:0 9px!important}
+}
+body.exporting .copyMWNBtn{display:none!important}
+
+
+/* V48 Google Sheet source */
+.gsheetDivider{display:flex;align-items:center;gap:10px;margin:12px auto 9px;max-width:820px;color:var(--muted);font-size:12px;font-weight:700}
+.gsheetDivider:before,.gsheetDivider:after{content:"";height:1px;background:var(--border);flex:1}
+.gsheetLoader{max-width:860px;margin:0 auto}
+.gsheetRow{display:grid;grid-template-columns:minmax(280px,1fr) auto auto;gap:8px;margin-top:8px}
+.gsheetRow input{width:100%;min-width:0;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--input);color:var(--text);font:inherit}
+.gsheetRow button{white-space:nowrap}
+.gsheetRow button:disabled{opacity:.5;cursor:not-allowed}
+.gsheetHelp,#gsheetRefreshInfo{font-size:12px;margin-top:6px}
+body.dark .gsheetRow input{background:#182337;color:#f1f5f9;border-color:#35445b}
+@media(max-width:700px){.gsheetRow{grid-template-columns:1fr 1fr}.gsheetRow input{grid-column:1/-1}}
+
+
+/* V49: 9:16 EOD portrait composition — use vertical canvas space efficiently */
+body.exporting #app{
+  width:1040px!important;min-width:1040px!important;max-width:1040px!important;
+  margin:0 auto!important;padding:0!important
+}
+body.exporting .wrap{width:1040px!important;max-width:1040px!important;padding:6px!important}
+body.exporting .cards,body.exporting .panel .cards,body.exporting .panel .cards[style]{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important
+}
+body.exporting #avtdCards,
+body.exporting .panel:first-of-type .cards{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+body.exporting .closureCards{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+body.exporting .operationalExtras{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+body.exporting .grid,body.exporting .grid:has(#vnTable){
+  grid-template-columns:1fr!important;gap:7px!important
+}
+body.exporting .panel{overflow:visible!important}
+
+
+/* Integrated LM + FM module navigation */
+.moduleTabs{display:flex;gap:8px;margin:0 0 14px}.moduleTab{background:var(--card);color:var(--text);border:1px solid var(--border);font-weight:800}.moduleTab.active{background:var(--navy);color:#fff}.fmModule{display:none}.fmKpis{grid-template-columns:repeat(5,minmax(150px,1fr))!important}.fmTableWrap{overflow:auto}.fmTableWrap table{min-width:700px}.fmSection{margin-bottom:16px}.fmSubgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:900px){.fmKpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.fmSubgrid{grid-template-columns:1fr}}
+body.dark .moduleTab.active{background:#eba637;color:#111827}
+.fmSortable{cursor:pointer;user-select:none}.fmSortable:hover{text-decoration:underline}
+
+/* V4 FM visual + biker classification + PNG EOD */
+.fmToolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 14px;flex-wrap:wrap}.fmToolbar .fmTitle{font-size:22px;font-weight:800;color:var(--navy)}body.dark .fmToolbar .fmTitle{color:#f8fafc}.fmEodBtn{font-weight:800;padding:10px 16px}.fmKpis .card{border-top:3px solid var(--blue)}.fmKpis .card:nth-child(3){border-top-color:#16a34a}.fmKpis .card:nth-child(4),.fmKpis .card:nth-child(5){border-top-color:#dc2626}.fmTypeBadge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid var(--border)}.fmTypeBadge.biker{background:#fff3cd;color:#7a4b00;border-color:#f2c94c}.fmTypeBadge.regular{background:#eef5ff;color:#17365d;border-color:#b7cbe3}body.dark .fmTypeBadge.biker{background:#3b2b0b;color:#ffd978;border-color:#7c5b14}body.dark .fmTypeBadge.regular{background:#172338;color:#bcd7ff;border-color:#35445b}.fmTableWrap tbody tr:hover{background:#2f75b50a}.fmTableWrap th{vertical-align:middle}.fmSection>.fmSubgrid{margin-top:8px}.fmReportStamp{display:none}.fm-exporting header,.fm-exporting .moduleTabs,.fm-exporting #lmUpload,.fm-exporting #app,.fm-exporting #fmModule>.upload,.fm-exporting .fmEodBtn{display:none!important}.fm-exporting #fmModule{display:block!important}.fm-exporting #fmDashboard{display:block!important;width:1280px!important;background:var(--bg);padding:14px!important}.fm-exporting .fmReportStamp{display:block!important;font-size:18px;font-weight:800;margin-bottom:10px}.fm-exporting .fmSection{break-inside:avoid;margin-bottom:10px}.fm-exporting .panel{overflow:visible!important}.fm-exporting .fmTableWrap{overflow:visible!important}.fm-exporting .fmTableWrap table{min-width:0!important;font-size:12px}.fm-exporting .fmSubgrid{grid-template-columns:1fr 1fr!important;gap:10px}.fm-exporting .fmKpis{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:8px!important}.fm-exporting .card{padding:10px!important;min-height:70px!important}.fm-exporting .card strong{font-size:22px!important}.fm-exporting th,.fm-exporting td{padding:5px 6px!important}.fm-exporting .fmSortable{cursor:default}.fm-exporting .fmToolbar{margin-bottom:8px}.fm-exporting .fmToolbar .fmTitle{font-size:24px}
+
+/* V5 FM organized report + readability */
+.fmKpis{grid-template-columns:repeat(4,minmax(180px,1fr))!important;gap:14px!important}
+.fmKpis .card{padding:18px!important;min-height:112px!important}
+.fmKpis .card small{font-size:15px!important}
+.fmKpis .card strong{font-size:32px!important;line-height:1.1!important}
+.fmKpis .card .muted{font-size:14px!important;line-height:1.45!important;margin-top:7px}
+.fmSection h3{font-size:20px!important}
+.fmAnalysisGrid{display:grid;grid-template-columns:1.45fr .82fr 1.25fr;gap:14px;align-items:start}
+.fmAnalysisGrid .panel{padding:16px!important}
+.fmTableWrap table{font-size:14px!important}
+.fmTableWrap th{font-size:13px!important;padding:9px 8px!important}
+.fmTableWrap td{font-size:14px!important;padding:9px 8px!important;line-height:1.25!important}
+.fmTypeBadge{font-size:12px!important;padding:4px 8px!important}
+.fmSectionLabel{font-size:22px;font-weight:800;color:var(--navy);margin:18px 2px 9px}
+body.dark .fmSectionLabel{color:#f8fafc}
+body.fm-exporting .fmToolbar .fmEodBtn{display:none!important}
+body.fm-exporting .fmTableWrap table{font-size:15px!important}
+body.fm-exporting .fmTableWrap th{font-size:14px!important}
+body.fm-exporting .fmTableWrap td{font-size:15px!important}
+body.fm-exporting .fmKpis .card small{font-size:16px!important}
+body.fm-exporting .fmKpis .card strong{font-size:34px!important}
+body.fm-exporting .fmKpis .card .muted{font-size:15px!important}
+@media(max-width:1000px){.fmAnalysisGrid{grid-template-columns:1fr}.fmKpis{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:600px){.fmKpis{grid-template-columns:1fr!important}}
+
+/* V6 KPI card polish + top failed clients */
+.fmKpis .card{background:var(--card);border:1px solid var(--border);border-top:4px solid var(--blue)!important;border-radius:14px!important;box-shadow:0 5px 14px rgba(15,23,42,.06)!important}
+.fmKpis .card:nth-child(2){border-top-color:#2f7fbd!important}
+.fmKpis .card:nth-child(3){border-top-color:#dc2626!important}
+.fmKpis .card:nth-child(4){border-top-color:#16a34a!important}
+.fmKpis .card small{font-weight:800;color:var(--navy)}
+body.dark .fmKpis .card small{color:#f8fafc}
+.fmKpis .card strong{display:block;margin-top:10px}
+
+
+/* V9 dynamic EOD title, conditional performance colors, light visual accents */
+.fmToolbar .fmTitle{font-size:26px!important}
+.fmReportStamp{color:var(--navy)}
+.fmKpis .card:nth-child(1){background:#f5f9ff!important}
+.fmKpis .card:nth-child(2){background:#f1fbf6!important;border-top-color:#22a06b!important}
+.fmKpis .card:nth-child(3){background:#fff5f5!important;border-top-color:#e5484d!important}
+.fmKpis .card:nth-child(4){background:#f3f8ff!important;border-top-color:#397cc2!important}
+.fmSectionLabel{background:#eef5ff;border-left:5px solid #397cc2;border-radius:9px;padding:9px 12px}
+.fmAnalysisGrid>.panel:nth-child(1){background:#f8fbff}
+.fmAnalysisGrid>.panel:nth-child(2){background:#fffaf0}
+.fmAnalysisGrid>.panel:nth-child(3){background:#f7fbf8}
+.fmFeGroup{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px}
+.fmFeGroup:first-child{background:#fffaf0}.fmFeGroup:last-child{background:#f7faff}
+.fmPctBad{color:#dc2626!important;font-weight:900!important}
+.fmPctGood{font-weight:800}
+body.dark .fmKpis .card:nth-child(n){background:var(--card)!important}
+body.dark .fmAnalysisGrid>.panel:nth-child(n),body.dark .fmFeGroup{background:var(--card)!important}
+body.dark .fmSectionLabel{background:#172338}
+.fm-exporting .fmReportStamp{font-size:26px!important;line-height:1.2!important;margin-bottom:12px!important}
+
+#lmTomorrowModule{width:100%}#lmTomorrowFrame{display:block}</style>
+
+<style>
+/* V15 LM/AVTD visual alignment with FM dashboard + matching EOD report style */
+#app{font-family:Segoe UI,Arial,sans-serif}
+.lmToolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(100deg,#123a70,#09275a);padding:16px 18px;border-radius:14px;color:#fff;margin-bottom:14px}
+.lmToolbar .lmTitle{color:#fff;font-size:28px;font-weight:800;line-height:1.15}
+.lmGeneratedAt{font-size:13px;font-weight:600;opacity:.88;margin-top:5px}
+.lmEodBtn{background:#1769d2!important;border:1px solid #7fb1ff!important;color:#fff!important;border-radius:8px!important;font-weight:800;padding:10px 16px}
+#app>.panel,.grid>.panel{border-radius:14px!important;box-shadow:0 4px 16px rgba(15,23,42,.055)!important;border:1px solid #edf1f6!important}
+#app .card{border-radius:12px!important;box-shadow:none!important;border:1px solid var(--border)!important;border-top:2px solid #4f8cff!important}
+#app .cards .card:nth-child(2){border-top-color:#1fa766!important}
+#app .cards .card:nth-child(3){border-top-color:#ff4d55!important}
+#app .cards .card:nth-child(4){border-top-color:#4f8cff!important}
+#app .card small{font-weight:800!important;color:#173f70!important}
+#app .sectionTitle{font-size:21px!important;background:linear-gradient(90deg,#edf5ff,#f8fbff)!important;border-left:4px solid #1769d2!important;border-radius:7px!important;padding:9px 11px!important;color:#173f70!important;margin:18px 2px 9px!important}
+#app table{border-collapse:collapse}
+#app th{background:#173f70!important;color:#fff!important;font-weight:800!important}
+#app tbody tr:nth-child(even){background:#fafcff}
+#app td{border-bottom:1px solid #e6ebf2}
+#app .panel h3{color:#173f70;font-size:20px!important}
+body.dark #app .card small,body.dark #app .panel h3{color:#f8fafc!important}
+body.dark #app .sectionTitle{background:#172338!important;color:#f8fafc!important}
+body.dark #app>.panel,body.dark .grid>.panel{border-color:#334055!important}
+body.exporting .lmToolbar{display:flex!important;margin-bottom:10px!important}
+body.exporting .lmToolbar .lmEodBtn{display:none!important}
+body.exporting .lmGeneratedAt{display:block!important;font-size:13px!important}
+body.exporting #app{width:1280px!important;min-width:1280px!important;max-width:1280px!important;background:var(--bg)!important;padding:10px!important;margin:0 auto!important}
+body.exporting .wrap{width:auto!important;max-width:none!important;padding:0!important}
+body.exporting .cards,body.exporting .panel .cards,body.exporting .panel .cards[style]{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important}
+body.exporting .closureCards{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+body.exporting .operationalExtras{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+body.exporting .grid,body.exporting .grid:has(#vnTable){grid-template-columns:1fr 1fr!important;gap:10px!important}
+body.exporting .panel{overflow:visible!important;padding:12px!important;margin-bottom:10px!important}
+body.exporting table{font-size:13px!important}
+body.exporting th,body.exporting td{padding:6px 7px!important}
+body.exporting #eodStamp{display:none!important}
+
+.fmFeSplit{display:grid;grid-template-columns:1fr;gap:14px;align-items:start}
+.fmFeGroup{min-width:0}
+.fmFeGroup h4{margin:4px 0 10px;font-size:17px;color:var(--navy,#173b64)}
+.fmFeGroup table{width:100%}
+@media(max-width:1000px){.fmFeSplit{grid-template-columns:1fr}}
+body.fm-exporting .fmFeSplit{grid-template-columns:1fr!important;gap:12px}
+.fmAnalysisGrid>.panel{min-width:0;border-radius:14px;box-shadow:0 4px 14px rgba(15,23,42,.05)}
+.fmFeGroup{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--card)}
+.fmFeGroup h4{padding:11px 12px;margin:0!important;background:#eef5ff;border-bottom:1px solid var(--border)}
+.fmFeGroup:nth-child(2) h4{background:#fff6e8;color:#8a4b08}
+body.dark .fmFeGroup h4{background:#172338} body.dark .fmFeGroup:nth-child(2) h4{background:#342513;color:#ffd39a}
+.fmFeGroup table{min-width:0!important;table-layout:auto}
+.fmFeGroup th,.fmFeGroup td{white-space:normal!important;overflow-wrap:anywhere}
+#fmReasons table,#fmClient table,#fmFtFE table,#fmFtReasons table,#fmFtClient table{min-width:0!important;width:100%}
+#fmReasons th,#fmReasons td,#fmClient th,#fmClient td,#fmFtFE th,#fmFtFE td,#fmFtReasons th,#fmFtReasons td,#fmFtClient th,#fmFtClient td{white-space:normal!important;overflow-wrap:anywhere}
+body.fm-exporting .fmAnalysisGrid{grid-template-columns:1.45fr .82fr 1.25fr!important;gap:10px!important}
+
+/* V10 reference-style FM report */
+.fmToolbar{background:linear-gradient(100deg,#123a70,#09275a);padding:16px 18px;border-radius:14px;color:#fff;margin-bottom:14px!important}
+.fmToolbar .fmTitle{color:#fff!important;font-size:28px!important;line-height:1.15}
+.fmGeneratedAt{font-size:13px;font-weight:600;opacity:.88;margin-top:5px}
+.fmEodBtn{background:#1769d2!important;border:1px solid #7fb1ff!important;color:#fff!important;border-radius:8px!important}
+.fmSection{border-radius:14px!important;box-shadow:0 4px 16px rgba(15,23,42,.055)!important}
+.fmKpis .card{border-radius:12px!important;box-shadow:none!important;border-width:1px!important;border-top-width:2px!important}
+.fmKpis .card:nth-child(1){background:#f3f7ff!important;border-top-color:#4f8cff!important}
+.fmKpis .card:nth-child(2){background:#f0faf4!important;border-top-color:#1fa766!important}
+.fmKpis .card:nth-child(3){background:#fff1f1!important;border-top-color:#ff4d55!important}
+.fmKpis .card:nth-child(4){background:#f2f6ff!important;border-top-color:#4f8cff!important}
+.fmSectionLabel{font-size:21px!important;background:linear-gradient(90deg,#edf5ff,#f8fbff)!important;border-left:4px solid #1769d2!important;border-radius:7px!important;padding:9px 11px!important}
+.fmAnalysisGrid>.panel{border:1px solid #edf1f6!important;box-shadow:0 3px 12px rgba(15,23,42,.045)!important}
+.fmTableWrap table,.fmFeGroup table{border-collapse:collapse}
+.fmTableWrap th,.fmFeGroup th{background:#173f70!important;color:#fff!important;font-weight:800!important}
+.fmTableWrap tbody tr:nth-child(even),.fmFeGroup tbody tr:nth-child(even){background:#fafcff}
+.fmTableWrap td,.fmFeGroup td{border-bottom:1px solid #e6ebf2}
+.fmFeGroup:first-child h4{background:#edf5ff!important;color:#173f70!important}.fmFeGroup:nth-child(2) h4{background:#fff4df!important;color:#9a5100!important}
+body.fm-exporting .fmReportStamp{display:none!important}
+body.fm-exporting .fmToolbar{display:flex!important}
+body.fm-exporting .fmToolbar .fmEodBtn{display:none!important}
+body.fm-exporting .fmGeneratedAt{display:block!important;font-size:13px!important}
+body.fm-exporting #fmDashboard{padding:10px!important}
+</style>
+
+<style id="dark-mode-visibility-fix">
+/* Final dark-mode readability fixes */
+body.dark,
+body.dark #lm,
+body.dark #fm,
+body.dark #tomorrow,
+body.dark .section,
+body.dark .panel,
+body.dark .card,
+body.dark .tableWrap {
+  color: #f3f4f6 !important;
+}
+
+body.dark .sectionTitle,
+body.dark .section-title,
+body.dark .card small,
+body.dark .card strong,
+body.dark .muted,
+body.dark label,
+body.dark th,
+body.dark td,
+body.dark .toolbar,
+body.dark .helper,
+body.dark .note,
+body.dark .subtle {
+  color: #f3f4f6 !important;
+}
+
+/* Table rows/cells that were forced to white text by older theme rules */
+body.dark table tbody tr,
+body.dark table tbody tr td,
+body.dark table tbody tr th,
+body.dark table thead tr,
+body.dark table thead tr th {
+  color: #f3f4f6 !important;
+}
+
+/* Preserve readable status colors while avoiding low-contrast white text */
+body.dark .threshold-good { color: #22c55e !important; }
+body.dark .threshold-bad { color: #ef4444 !important; }
+
+/* Native dropdowns and filter text */
+body.dark select,
+body.dark input,
+body.dark textarea {
+  color: #f3f4f6 !important;
+  background-color: #182235 !important;
+}
+
+/* Option text is rendered by the browser, but explicitly setting it helps
+   on Chromium/Windows where inherited theme rules can make options unreadable. */
+body.dark select option {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+
+/* Avoid the pale/white "washed out" table rows visible in dark mode. */
+body.dark table tbody tr:nth-child(even),
+body.dark table tbody tr:nth-child(odd) {
+  background-color: transparent !important;
+}
+</style>
+
+
+<style id="eod-vn5-only">
+body.exporting .vnAgentGroups table tbody tr:nth-child(n+6) {
+  display:none !important;
+}
+</style>
+
+
+<style id="vn-local-filter-style">
+.vnPerformanceHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:14px 0 8px}
+.vnPerformanceHeader h3{margin:0}
+.vnPerformanceHeader select{min-width:150px}.vnPerformanceFilters{display:flex;gap:8px;align-items:center}
+</style>
+<style id="vn-bp-agent-group-style">
+.vnAgentGroups{display:flex;flex-direction:column;gap:10px;max-height:620px;overflow-y:auto;padding-right:4px}
+.vnAgentGroup{border:1px solid #d7e0eb;border-radius:8px;overflow:hidden;background:var(--card-bg,#fff)}
+.vnAgentGroupTitle{font-weight:800;font-size:14px;padding:9px 12px;background:#edf3fa;color:#173f6d}
+.vnAgentGroup table{margin:0;width:100%}
+.vnGroupedTable th:first-child,.vnGroupedTable td:first-child{min-width:130px}
+@media(max-width:900px){
+ .vnAgentGroups{max-height:none}
+}
+body.dark .vnAgentGroup{background:#182235;border-color:#34445d}
+body.dark .vnAgentGroupTitle{background:#213957;color:#f3f4f6}
+</style>
+<style id="vn-bp-group-fix">
+.vnAgentGroupTitle{font-size:14px;font-weight:800;padding:10px 12px;background:#edf3fa;color:#173f6d}
+.vnAgentGroup .vnGroupedTable{width:100%;table-layout:auto}
+.vnAgentGroup .vnGroupedTable th:first-child,.vnAgentGroup .vnGroupedTable td:first-child{min-width:145px}
+</style>
+<style id="kpi-weight-style">
+.kpiWeight{font-size:12px!important;margin-top:3px;line-height:1.2}
+</style>
+</head>
+<body class="locked">
+<div id="loginGate">
+<div class="loginBox">
+<h2>AVTD Dashboard</h2>
+<p>Enter the dashboard password to continue.</p>
+<input id="dashboardPassword" type="password" placeholder="Password" autocomplete="current-password">
+<button type="button" id="loginButton" onclick="AVTDAuth.login()">Login</button>
+<button type="button" id="resetPasswordBtn" class="resetPasswordBtn" onclick="AVTDAuth.openReset()">Reset Password</button>
+<div id="loginError"></div>
+</div>
+</div>
+
+<header><div class="headrow"><div><h1>Operations Dashboard</h1></div><button id="themeToggle" class="themeToggle" title="Toggle dark/light mode" aria-label="Toggle dark/light mode">☾</button></div></header>
+<div class="wrap">
+<div class="moduleTabs"><button id="lmTabBtn" class="moduleTab active" onclick="switchModule('LM')">LM Dashboard</button><button id="fmTabBtn" class="moduleTab" onclick="switchModule('FM')">FM Dashboard</button><button id="tomorrowLoadTabBtn" class="moduleTab" onclick="switchModule('TOMORROW_LOAD')">LM - Tomorrow Load</button></div>
+<div class="upload" id="lmUpload">
+  <b>Upload AVTD Excel / CSV</b><br>
+  <input id="file" type="file" accept=".xlsx,.xls,.csv">
+<div class="gsheetDivider"><span>OR</span></div>
+<div class="gsheetLoader">
+  <b>Load from Google Sheet</b>
+  <div class="gsheetRow">
+    <input id="gsheetUrl" type="url" placeholder="Paste Google Sheet link">
+    <button type="button" id="loadGsheetBtn">Load Sheet</button>
+    <button type="button" id="refreshGsheetBtn" disabled>Refresh</button>
+  </div>
+  <div class="muted gsheetHelp">Paste the Google Sheet link and click Load Sheet. The latest sheet data will run through the same dashboard analysis.</div>
+  <div class="muted" id="gsheetRefreshInfo"></div>
+</div>
+  <div class="muted">Supports workbooks like Mysore / Kannur / Kozhikode. Pivot/summary sheets are ignored if they do not contain MWN data.</div>
+  <div id="status">No file loaded.</div>
+</div>
+
+<div id="app" class="lmModule" style="display:none">
+<div class="lmToolbar"><div><div class="lmTitle" id="lmMainTitle">LM Performance Dashboard</div><div class="lmGeneratedAt" id="lmGeneratedAt"></div></div><button type="button" class="lmEodBtn eod-hide" id="lmTopEodBtn">Download EOD PNG</button></div>
+<div id="eodStamp"></div>
+<div class="panel" style="margin-bottom:16px">
+<h3>AVTD Performance</h3>
+<div class="cards" style="grid-template-columns:repeat(5,minmax(170px,1fr));margin:8px 0 10px">
+<div class="card overallAvtdCard"><small>Overall AVTD %</small><strong id="kOverallAvtd">0%</strong><div class="muted" id="kOverallAvtdDetail">0 dispatched / 0 total</div></div>
+<div class="card"><small>B2B AVTD %</small><strong id="kB2BAvtd">0%</strong><div class="muted" id="kB2BAvtdDetail">0 dispatched / 0 total</div></div>
+<div class="card"><small>B2C AVTD %</small><strong id="kB2CAvtd">0%</strong><div class="muted" id="kB2CAvtdDetail">0 dispatched / 0 total</div></div>
+<div class="card"><small>Heavy AVTD %</small><strong id="kHeavyAvtd">0%</strong><div class="muted" id="kHeavyAvtdDetail">0 dispatched / 0 total</div></div>
+<div class="card"><small>RVP AVTD %</small><strong id="kRVPAvtd">0%</strong><div class="muted" id="kRVPAvtdDetail">0 dispatched / 0 total</div></div>
+</div>
+<div id="avtdTable"></div>
+</div>
+<div class="controls eod-hide">
+<select id="center"><option value="">All Centers</option></select>
+<select id="pdt"><option value="">All PDT</option></select>
+<select id="md"><option value="">All MDs</option></select>
+      <select id="pt"><option value="">All PTs</option></select>
+<select id="avtd"><option value="">All AVTD Categories</option></select>
+<select id="vn"><option value="">All VNs</option></select>
+<select id="flare"><option value="">All Flares</option></select>
+<input id="search" type="search" placeholder="Search client / reason / MWN">
+<button id="reset">Reset Filters</button>
+<button id="eodDownload" title="Download current dashboard as EOD PNG">Download EOD PNG</button>
+</div>
+
+<div class="sectionTitle">Closure Performance</div>
+<div class="cards closureCards">
+<div class="card"><small>B2B Delivered %</small><strong id="kB2BDelivered">0%</strong><div class="muted" id="kB2BDetail">0 delivered / 0 attempted</div></div>
+<div class="card"><small>Heavy Delivered %</small><strong id="kHeavyDelivered">0%</strong><div class="muted" id="kHeavyDetail">0 delivered / 0 attempted</div></div>
+<div class="card"><small>Prepaid B2C Delivered %</small><strong id="kPrepaidDelivered">0%</strong><div class="muted" id="kPrepaidDetail">0 delivered / 0 attempted</div></div>
+<div class="card"><small>COD-B2C Delivered %</small><strong id="kCodDelivered">0%</strong><div class="muted" id="kCodDetail">0 delivered / 0 attempted</div></div>
+<div class="card"><small>RVP Picked Up %</small><strong id="kRvpPicked">0%</strong><div class="muted" id="kRvpDetail">0 picked up / 0 scheduled</div></div>
+</div>
+<div class="cards">
+<div class="card"><small>Gross AVTD</small><strong id="kTotal">0</strong><div class="muted kpiWeight" id="kTotalWeightDetail">0.0 T</div></div>
+<div class="card"><small>Net AVTD</small><strong id="kNetAvtd">0</strong><div class="muted kpiWeight" id="kNetWeightDetail">0.0 T</div></div>
+<div class="card"><small>Dispatched</small><strong id="kDisp">0</strong><div class="muted kpiWeight" id="kDispWeightDetail">0.0 T</div></div>
+
+
+
+<div class="card"><div class="closureDetailHead"><small>Pending to Dispatch</small><button type="button" class="closureEyeBtn" onclick="openClosureWaybillModal('pending')" title="View Pending to Dispatch waybills" aria-label="View Pending to Dispatch waybills">👁</button></div><strong id="kPendingDispatch">0</strong><div class="muted kpiWeight" id="kPendingWeightDetail">0.0 T</div></div>
+<div class="card"><div class="closureDetailHead"><small>Client - Consignee Issue</small><button type="button" class="closureEyeBtn" onclick="openClosureWaybillModal('client')" title="View Client - Consignee Issue waybills" aria-label="View Client - Consignee Issue waybills">👁</button></div><strong id="kClientConsignee">0</strong><div class="muted kpiWeight" id="kClientWeightDetail">0.0 T</div></div>
+<div class="card"><div class="closureDetailHead"><small>Future NTD</small><button type="button" class="closureEyeBtn" onclick="openClosureWaybillModal('future')" title="View Future NTD waybills" aria-label="View Future NTD waybills">👁</button></div><strong id="kFutureNTD">0</strong><div class="muted kpiWeight" id="kFutureWeightDetail">0.0 T</div></div>
+<div class="card"><small>Post Cutoff Received - Tomorrow AVTD</small><strong id="kPostCutoffTomorrow">0</strong><div class="muted kpiWeight" id="kPostCutoffWeightDetail">0.0 T</div></div>
+ <div class="card"><small>Total Weight</small><strong id="kTotalWeight">0 T</strong></div>
+ <div class="card"><small>Dispatched Weight</small><strong id="kDispatchedWeight">0 T</strong></div>
+ <div class="card"><small>BP Share</small><strong id="kBpShare">0%</strong></div>
+</div>
+<div class="cards operationalExtras">
+  <div class="card"><small>Total Regular Vehicles Used</small><strong id="kRegularVehicles">0</strong></div>
+  <div class="card"><small>Total Adhoc Vehicles Used</small><strong id="kAdhocVehicles">0</strong></div>
+  <div class="card"><small>Total Agent Vehicles Used</small><strong id="kAgentVehicles">0</strong></div>
+  <div class="card damageCard">
+  <div class="damageHead">
+    <small>Damage on POD LR Count</small>
+    <button type="button" id="damageEye" class="eyeBtn" onclick="openDamageModal()" title="View Damage on POD MWNs" aria-label="View Damage on POD MWNs">👁</button>
+  </div>
+  <strong id="kDamagePOD">0</strong>
+</div>
+</div>
+
+
+
+
+
+<div class="analysisTopGrid">
+<div class="panel"><h3>Failure Reason Analysis</h3><div id="reasonTable" style="margin-top:12px"></div></div>
+<div class="panel"><h3>Flare Analysis</h3><div id="flareTable"></div></div>
+</div>
+<div class="vnPerformanceHeader">
+  <div><h3 id="performanceTitle">VN Performance</h3><span class="muted">FE/VN and BP/Regular filters apply only to Top & Bottom Performance</span></div>
+  <div class="vnPerformanceFilters">
+    <select id="feVnType"><option value="VN">VN</option><option value="FE">FE</option></select>
+    <select id="vnBpRegular"><option value="">All BP/Regular</option><option value="BP">BP (Agent)</option><option value="Regular">Regular</option></select>
+  </div>
+</div>
+<div class="vnPerformanceGrid">
+<div class="panel"><h3>Top VN Performance</h3><div id="vnBestTable"></div></div>
+<div class="panel"><h3>Bottom VN Performance</h3><div id="vnBottomTable"></div></div>
+</div>
+</div>
+
+<div id="fmModule" class="fmModule">
+  <div class="upload">
+    <b>Upload FM Pickup Excel / CSV</b><br>
+    <input id="fmFile" type="file" accept=".xlsx,.xls,.csv">
+    <div class="muted">FM analysis uses the finalized sequential failure-exclusion logic.</div>
+    <div id="fmStatus" class="muted">No FM file loaded.</div>
+  </div>
+  <div id="fmDashboard" style="display:none">
+    <div class="fmReportStamp" id="fmReportStamp"></div>
+    <div class="fmToolbar"><div><div class="fmTitle" id="fmMainTitle">FM Pickup Dashboard</div><div class="fmGeneratedAt" id="fmGeneratedAt"></div></div><button type="button" class="fmEodBtn" onclick="downloadFMEODPNG()">Download EOD PNG</button></div>
+    <div class="panel fmSection"><h3>Overall Pickup Performance</h3><div class="cards fmKpis">
+      <div class="card"><small>Total PUR Count</small><strong id="fmTotal">0</strong><div class="muted" id="fmDate">-</div></div>
+      <div class="card"><small>Picked Up + Validated</small><strong id="fmSuccessCount">0</strong><div class="muted" id="fmPickedDetail"></div></div>
+      <div class="card"><div class="fmFailedHead"><small>Failed</small><button type="button" class="fmFailedEye" onclick="showFmFailedPickupIds('overall')" title="View failed Pickup IDs" aria-label="View failed Pickup IDs">👁</button></div><strong id="fmFailCount">0</strong><div class="muted" id="fmFailDetail"></div></div>
+      <div class="card"><small>Picked Up %</small><strong id="fmPickedPct">0%</strong><div class="muted">Final pickup success</div></div>
+    </div></div>
+
+    <div class="panel fmSection"><h3>FTP B2B Pickup Performance</h3><div id="fmFtSummary" class="cards fmKpis"></div></div>
+
+    <div class="panel fmSection"><h3>B2B / B2C / Heavy Pickup Analysis</h3><div id="fmProduct" class="fmTableWrap"></div></div>
+
+    <div class="fmSectionLabel">Overall Pickup Analysis</div>
+    <div class="fmAnalysisGrid fmSection">
+      <div class="panel"><h3>FE-wise Pickup Performance</h3><div id="fmFE" class="fmTableWrap"></div></div>
+      <div class="panel"><h3>Remarks-wise Failure Analysis</h3><div id="fmReasons" class="fmTableWrap"></div></div>
+    </div>
+
+    <div class="fmSectionLabel">FTP B2B Pickup Analysis</div>
+    <div class="fmAnalysisGrid fmSection">
+      <div class="panel"><h3>FTP FE-wise Pickup Performance (All FEs)</h3><div id="fmFtFE" class="fmTableWrap"></div></div>
+      <div class="panel"><h3>FTP Remarks-wise Failure Analysis</h3><div id="fmFtReasons" class="fmTableWrap"></div></div>
+    </div>
+
+    <div class="fmSectionLabel">Failure Analysis</div>
+    <div class="fmFailureNarrativeGrid fmSection">
+      <div class="panel fmFailureNarrative"><h3>Pickup Failure Analysis</h3><div id="fmFailureNarrative"></div></div>
+      <div class="panel fmFailureNarrative"><h3>FTP B2B Failure Analysis</h3><div id="fmFtpFailureNarrative"></div></div>
+    </div>
+  </div>
+</div>
+</div>
+<div id="fmFailedModal" class="fmFailedModal" onclick="if(event.target===this)closeFmFailedPickupIds()">
+  <div class="fmFailedModalBox">
+    <div class="fmFailedModalHead"><h3 id="fmFailedModalTitle">Failed Pickup IDs</h3><button type="button" class="fmFailedModalClose" onclick="closeFmFailedPickupIds()" aria-label="Close">×</button></div>
+    <div id="fmFailedIds" class="fmFailedIds"></div>
+  </div>
+</div>
+<script>
+let raw=[]; const perfSort={vn:"count",flare:"count"};
+let vnBestSort="delivered";
+let feVnType="VN";
+let vnBpRegular="";
+let vnBottomSort="pending";
+const $=id=>document.getElementById(id);
+const val=(r,...keys)=>{for(const k of keys){if(r[k]!==undefined&&r[k]!==null&&String(r[k]).trim()!=="")return r[k]}return ""};
+const s=v=>String(v??"").trim();
+const norm=v=>String(v??"").replace(/\\u00A0/g," ").trim().replace(/\\s+/g," ").toLowerCase();
+const facilityValue=r=>s(val(r,"cn","CN","center","Center","facility","Facility","facility_name","Facility Name"));
+const num=v=>{let n=Number(v);return Number.isFinite(n)?n:0};
+const fmt=v=>Number(v||0).toLocaleString("en-IN");
+const pending=r=>s(val(r,"ss","SS")).toLowerCase()==="pending"||s(val(r,"Main_Remarks","main_remarks")).toLowerCase()==="pending";
+const dispatched=r=>s(val(r,"Main_Remarks","main_remarks")).toLowerCase()==="dispatched";
+
+// Final Closure Performance logic.
+const deliveryStatusEligible=r=>["DL","UD","RT"].includes(s(val(r,"st")).toUpperCase());
+const dispatchEligible=r=>s(val(r,"Main_Remarks","main_remarks")).toLowerCase()==="dispatched" && deliveryStatusEligible(r);
+const lmForwardEligible=r=>s(val(r,"AVTD_Cat")).toUpperCase()==="LM FORWARD";
+
+const prepaidEligible=r=>{
+  const p=s(val(r,"pdt")).toUpperCase(), pay=s(val(r,"pt")).toUpperCase();
+  return lmForwardEligible(r) && dispatchEligible(r) && p==="B2C" && pay!=="COD";
+};
+const codEligible=r=>{
+  const p=s(val(r,"pdt")).toUpperCase(), pay=s(val(r,"pt")).toUpperCase();
+  return lmForwardEligible(r) && dispatchEligible(r) && p==="B2C" && pay==="COD";
+};
+const heavyEligible=r=>lmForwardEligible(r) && dispatchEligible(r) && s(val(r,"pdt")).toUpperCase()==="HEAVY";
+const b2bEligible=r=>lmForwardEligible(r) && dispatchEligible(r) && s(val(r,"pdt")).toUpperCase()==="B2B";
+const rvpEligible=r=>s(val(r,"AVTD_Cat")).toUpperCase()==="RVP" && s(val(r,"Main_Remarks","main_remarks")).toLowerCase()==="dispatched";
+
+function deliveryMetric(rows,eligible){
+  const attempted=rows.filter(eligible);
+  const delivered=attempted.filter(r=>s(val(r,"st")).toUpperCase()==="DL").length;
+  const failed=attempted.length-delivered;
+  return {attempted:attempted.length,delivered,failed,deliveredRate:attempted.length?delivered/attempted.length:0,failureRate:attempted.length?failed/attempted.length:0};
+}
+function rvpPickupMetric(rows){
+  const eligible=rows.filter(rvpEligible);
+  const picked=eligible.filter(r=>s(val(r,"st")).toUpperCase()==="PU").length;
+  const notPicked=eligible.filter(r=>s(val(r,"st")).toUpperCase()==="PP").length;
+  const attempted=picked+notPicked;
+  return {picked,notPicked,attempted,rate:attempted?picked/attempted:0};
+}
+function avtdEligible(r,category){
+ const mr=s(val(r,"Main_Remarks","main_remarks")).toLowerCase();
+ if(!["dispatched","pending"].includes(mr)) return false;
+ const p=s(val(r,"pdt")).toUpperCase();
+ const ac=s(val(r,"AVTD_Cat")).toUpperCase();
+ if(category==="RVP") return ac==="RVP";
+ return p===category.toUpperCase() && ac!=="RVP";
+}
+function avtdMetric(rows,category){
+ const eligible=rows.filter(r=>avtdEligible(r,category));
+ const dispatched=eligible.filter(r=>s(val(r,"Main_Remarks","main_remarks")).toLowerCase()==="dispatched").length;
+ const pending=eligible.filter(r=>s(val(r,"Main_Remarks","main_remarks")).toLowerCase()==="pending").length;
+ const total=dispatched+pending;
+ return {pending,dispatched,total,rate:total?dispatched/total:0};
+}
+function avtdSummaryTable(metrics){
+ return `<table><thead><tr><th>AVTD Category</th><th>Dispatched</th><th>Pending</th><th>Total</th><th>AVTD %</th></tr></thead><tbody>`+
+ ["B2B","B2C","Heavy","RVP"].map(k=>{const x=metrics[k];return `<tr><td>${k}</td><td>${fmt(x.dispatched)}</td><td>${fmt(x.pending)}</td><td>${fmt(x.total)}</td><td><b class="${100*x.rate<90?'threshold-bad':'threshold-good'}">${(100*x.rate).toFixed(1)}%</b></td></tr>`}).join("")+
+ "</tbody></table>";
+}
+function performanceGroup(rows,keyfn){
+ const m=new Map();
+ rows.forEach(r=>{
+   const k=s(keyfn(r))||"Blank";
+   let x=m.get(k)||{
+     key:k,
+     prepaid:{attempted:0,delivered:0,failed:0},
+     cod:{attempted:0,delivered:0,failed:0},
+     b2b:{attempted:0,delivered:0,failed:0}
+   };
+   const add=(bucket,eligible)=>{
+     if(eligible(r)){
+       bucket.attempted++;
+       if(s(val(r,"st")).toUpperCase()==="DL") bucket.delivered++;
+       else bucket.failed++;
+     }
+   };
+   add(x.prepaid,prepaidEligible);
+   add(x.cod,codEligible);
+   add(x.b2b,b2bEligible);
+   m.set(k,x);
+ });
+ return [...m.values()].filter(x=>x.prepaid.attempted+x.cod.attempted+x.b2b.attempted>0);
+}
+function metricCell(x){
+ return x.attempted ? `${(100*x.delivered/x.attempted).toFixed(1)}%<br><span class="muted">${fmt(x.failed)} fail / ${fmt(x.attempted)} att.</span>` : "-";
+}
+function vnPerformanceGroup(rows){
+ const scoped=rows.filter(r=>{
+   const md=s(val(r,"md","MD")).toUpperCase().trim();
+   const isAgent=(md==="AGENT" || md==="BP" || md==="AGENT VEHICLE" || md==="AGENT_VEHICLE");
+   return !vnBpRegular || (vnBpRegular==="BP" ? isAgent : !isAgent);
+ });
+ const m=new Map(), seenByKey=new Map();
+ scoped.forEach((r,idx)=>{
+   const key=feVnType==="FE" ? (s(val(r,"dn","DN"))||"Blank") : (s(val(r,"vn","VN"))||"Blank");
+   const eligible=prepaidEligible(r)||codEligible(r)||b2bEligible(r);
+   if(!eligible) return;
+   let x=m.get(key)||{
+     key,
+     fu_name:s(val(r,"fu_name","FU_NAME"))||"",
+     isBP:(["AGENT","BP","AGENT VEHICLE","AGENT_VEHICLE"].includes(s(val(r,"md","MD")).toUpperCase().trim())),
+     attempted:0,delivered:0,pending:0
+   };
+   let seen=seenByKey.get(key);
+   if(!seen){seen=new Set();seenByKey.set(key,seen)}
+   const id=s(val(r,"mwn","MWN","waybill","Waybill","waybill_no","Waybill No","LR","lr"))||(`__row_${idx}`);
+   if(seen.has(id)) return;
+   seen.add(id);
+   x.attempted++;
+   if(s(val(r,"st","ST","St","Status")).toUpperCase()==="DL") x.delivered++;
+   else x.pending++;
+   m.set(key,x);
+ });
+ return [...m.values()].filter(x=>x.attempted>0).map(x=>({...x,deliveredRate:x.attempted?x.delivered/x.attempted:0,failureRate:x.attempted?x.pending/x.attempted:0}));
+}
+function vnSortControls(which){
+ const isBest=which==="best";
+ const value=isBest?vnBestSort:vnBottomSort;
+ const options=isBest
+   ? `<option value="delivered" ${value==="delivered"?'selected':''}>MWN Delivered ↓</option><option value="rate" ${value==="rate"?'selected':''}>Delivered % ↓</option>`
+   : `<option value="pending" ${value==="pending"?'selected':''}>MWN Pending ↓</option><option value="rate" ${value==="rate"?'selected':''}>Failure % ↓</option>`;
+ return `<div class="vnSortBar"><span class="muted">Sort by:</span><select onchange="setVNSort('${which}',this.value)">${options}</select></div>`;
+}
+function setVNSort(which,value){
+ if(which==="best") vnBestSort=value; else vnBottomSort=value;
+ render();
+}
+function vnTable(rows,which){
+ const isBest=which==="best";
+ const sorted=[...rows].sort((a,b)=>{
+   if(isBest){
+     if(vnBestSort==="delivered" && b.delivered!==a.delivered) return b.delivered-a.delivered;
+     if(vnBestSort==="rate" && b.deliveredRate!==a.deliveredRate) return b.deliveredRate-a.deliveredRate;
+     if(b.delivered!==a.delivered) return b.delivered-a.delivered;
+     return a.failureRate-b.failureRate;
+   }
+   if(vnBottomSort==="pending" && b.pending!==a.pending) return b.pending-a.pending;
+   if(vnBottomSort==="rate" && b.failureRate!==a.failureRate) return b.failureRate-a.failureRate;
+   if(b.pending!==a.pending) return b.pending-a.pending;
+   return b.failureRate-a.failureRate;
+ });
+
+ const showFU=vnBpRegular==="BP" && feVnType==="VN";
+ const entityLabel=feVnType==="FE"?"FE":"VN";
+
+ const rowHtml=x=>`<tr>
+   <td><b>${escapeHtml(x.key)}${x.isBP?" (BP)":""}</b></td>
+   <td class="${isBest?'vnBestBadge':''}">${fmt(x.delivered)}</td>
+   <td class="${!isBest?'vnBottomBadge':''}">${fmt(x.pending)}</td>
+   <td class="${x.deliveredRate>=0.9?'vnBestBadge':''}">${Math.round(100*x.deliveredRate)}%</td>
+   <td class="${x.failureRate>0?'bad':''}">${Math.round(100*x.failureRate)}%</td>
+ </tr>`;
+
+ const header=`<table class="vnGroupedTable"><thead><tr>
+   <th>${entityLabel}</th><th>MWN Delivered</th><th>MWN Pending</th><th>Delivered %</th><th>Failure %</th>
+ </tr></thead><tbody>`;
+
+ if(showFU){
+   const exportRows=document.body.classList.contains("exporting") ? sorted.slice(0,5) : sorted;
+   const groups=new Map();
+   exportRows.forEach(x=>{
+     const fu=x.fu_name||"Unknown Agent";
+     if(!groups.has(fu)) groups.set(fu,[]);
+     groups.get(fu).push(x);
+   });
+   return vnSortControls(which)+`<div class="vnAgentGroups">`+
+     [...groups.entries()].map(([fu,list])=>`
+       <section class="vnAgentGroup">
+         <div class="vnAgentGroupTitle">${escapeHtml(fu)}</div>
+         ${header}${list.map(rowHtml).join("")}</tbody></table>
+       </section>`).join("")+
+     `</div>`;
+ }
+
+ return vnSortControls(which)+header+sorted.map(rowHtml).join("")+`</tbody></table>`;
+}
+function perfTable(rows,label,limit=15,sortMode="rate"){
+ rows=rows.filter(x=>(x.prepaid.attempted+x.cod.attempted+x.b2b.attempted)>25);
+ rows=rows.sort((a,b)=>{
+   const af=a.prepaid.failed+a.cod.failed+a.b2b.failed, bf=b.prepaid.failed+b.cod.failed+b.b2b.failed;
+   const aa=a.prepaid.attempted+a.cod.attempted+a.b2b.attempted, ba=b.prepaid.attempted+b.cod.attempted+b.b2b.attempted;
+   const ar=aa?af/aa:0, br=ba?bf/ba:0;
+   if(sortMode==="count"){
+     if(bf!==af) return bf-af;      // failure count always descending
+     if(br!==ar) return br-ar;
+     return ba-aa;
+   }
+   if(br!==ar) return br-ar;        // failure % stays descending as currently
+   if(bf!==af) return bf-af;
+   return ba-aa;
+ }).slice(0,limit);
+ return `<table><thead><tr><th>${label}</th><th>Overall Failure %</th><th>PREPAID B2C/HEAVY Delivered %</th><th>COD B2C/HEAVY Delivered %</th><th>B2B Delivered %</th><th>Total Failed</th></tr></thead><tbody>`+
+ rows.map(x=>{
+   const tf=x.prepaid.failed+x.cod.failed+x.b2b.failed;
+   const ta=x.prepaid.attempted+x.cod.attempted+x.b2b.attempted;
+   const overallRate=ta?100*tf/ta:0;
+   return `<tr><td>${escapeHtml(x.key)}</td><td class="${overallRate?'bad':''}"><b>${overallRate.toFixed(1)}%</b><br><span class="muted">${fmt(tf)} fail / ${fmt(ta)} att.</span></td><td>${metricCell(x.prepaid)}</td><td>${metricCell(x.cod)}</td><td>${metricCell(x.b2b)}</td><td class="${tf?'bad':''}">${fmt(tf)}</td></tr>`;
+ }).join("")+"</tbody></table>";
+}
+function sortControls(type){
+ const mode=perfSort[type];
+ const label=mode==="rate" ? "Failure % ↓" : "Failure Count ↓";
+ return `<div class="sortbar"><span class="muted">Sort by:</span>
+ <button class="active" onclick="togglePerfSort('${type}')">${label} ▾</button>
+ </div>`;
+}
+function togglePerfSort(type){
+ perfSort[type]=perfSort[type]==="rate" ? "count" : "rate";
+ render();
+}
+function failureContributionTable(rows,label,limit=5){
+ const totals={
+   prepaid: rows.reduce((a,x)=>a+x.prepaid.failed,0),
+   cod: rows.reduce((a,x)=>a+x.cod.failed,0),
+   b2b: rows.reduce((a,x)=>a+x.b2b.failed,0)
+ };
+ const overall=totals.prepaid+totals.cod+totals.b2b;
+ rows=rows.sort((a,b)=>{
+   const af=a.prepaid.failed+a.cod.failed+a.b2b.failed;
+   const bf=b.prepaid.failed+b.cod.failed+b.b2b.failed;
+   return bf-af;
+ }).slice(0,limit);
+ const combined=(n,d)=>d?`${(100*n/d).toFixed(1)}% (${fmt(n)})`:`0.0% (0)`;
+ return `<table><thead><tr>
+ <th>${label}</th>
+ <th>PREPAID Contribution</th>
+ <th>COD Contribution</th>
+ <th>B2B Contribution</th>
+ <th>Overall Contribution</th>
+ </tr></thead><tbody>`+
+ rows.map(x=>{
+   const tf=x.prepaid.failed+x.cod.failed+x.b2b.failed;
+   return `<tr>
+   <td>${escapeHtml(x.key)}</td>
+   <td>${combined(x.prepaid.failed,totals.prepaid)}</td>
+   <td>${combined(x.cod.failed,totals.cod)}</td>
+   <td>${combined(x.b2b.failed,totals.b2b)}</td>
+   <td class="${tf?'bad':''}"><b>${combined(tf,overall)}</b></td>
+   </tr>`;
+ }).join("")+"</tbody></table>";
+}
+function failureRows(rows){
+ return rows.filter(r=>{
+   if(!dispatchEligible(r)) return false;
+   const p=s(val(r,"pdt")).toUpperCase(), pay=s(val(r,"pt")).toUpperCase(), st=s(val(r,"st")).toUpperCase();
+   const eligible=(["B2C","HEAVY"].includes(p)&&["PRE-PAID","REPL","COD"].includes(pay))||p==="B2B";
+   return eligible && st!=="DL";
+ });
+}
+function escapeHtml(x){return s(x).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function filtered(){
+ const C=norm($("center").value),P=norm($("pdt").value),M=norm($("md").value),A=norm($("avtd").value),V=norm($("vn").value),F=norm($("flare").value),Q=norm($("search").value);
+ return raw.filter(r=>{
+   const facility=norm(facilityValue(r));
+   const p=norm(val(r,"pdt"));
+   const md=norm(val(r,"md","MD"));
+   const avtd=norm(val(r,"AVTD_Cat"));
+   const vn=norm(val(r,"vn","VN"));
+   const flare=norm(val(r,"flare_info_display_name"));
+   const searchFields=[val(r,"cl"),val(r,"NSL_REMARKS"),val(r,"mwn")].map(norm);
+   return (!C||facility===C)&&(!P||p===P)&&(!M||md===M)&&(!A||avtd===A)&&(!V||vn===V)&&(!F||flare===F)&&(!Q||searchFields.some(x=>x.includes(Q)));
+ });
+}
+$("feVnType").addEventListener("change",()=>{
+ feVnType=$("feVnType").value;
+ $("performanceTitle").textContent=feVnType==="FE"?"FE Performance":"VN Performance";
+ render();
+});
+$("vnBpRegular").addEventListener("change",()=>{vnBpRegular=$("vnBpRegular").value;render();});
+
+function render(){
+ let rows=filtered();
+ // Explicit facility guard: facility selection is always applied first.
+ const selectedFacility=norm($("center").value);
+ if(selectedFacility){
+   rows=rows.filter(r=>norm(facilityValue(r))===selectedFacility);
+ }
+ console.debug("Facility filter:", $("center").value, "Rows:", rows.length);
+ const pend=rows.filter(pending).length, disp=rows.filter(dispatched).length;
+ const mainRemark=r=>s(val(r,"Main_Remarks","main_remarks")).toLowerCase();
+
+  // Weight KPIs:
+  // Total Weight excludes Future NTD, Client - Consignee Issue and
+  // Post Cutoff Received - Tomorrow AVTD. All other Main_Remarks are included.
+  const weightKg=r=>{
+    const n=Number(String(val(r,"wt_in_kg","WT_IN_KG","weight","Weight")).replace(/,/g,"").trim());
+    return Number.isFinite(n)?n:0;
+  };
+  const excludedWeightRemarks=new Set([
+    "future ntd",
+    "client - consignee issue",
+    "post cutoff received - tomorrow avtd"
+  ]);
+  const totalWeight=rows.reduce((sum,r)=>{
+    return excludedWeightRemarks.has(mainRemark(r)) ? sum : sum+weightKg(r);
+  },0);
+
+  // Dispatched Weight = only rows where Main_Remarks is exactly Dispatched.
+  const dispatchedWeight=rows.reduce((sum,r)=>{
+    return mainRemark(r)==="dispatched" ? sum+weightKg(r) : sum;
+  },0);
+
+  // BP Share = dispatched weight of Agent vehicles / total dispatched weight.
+  // Agent is identified from MD using the same Agent/BP variants used by
+  // the BP performance filter.
+  const isAgentVehicle=r=>{
+    const md=s(val(r,"md","MD")).toUpperCase().trim();
+    return md==="AGENT" || md==="BP" || md==="AGENT VEHICLE" || md==="AGENT_VEHICLE";
+  };
+  const bpDispatchedWeight=rows.reduce((sum,r)=>{
+    return mainRemark(r)==="dispatched" && isAgentVehicle(r) ? sum+weightKg(r) : sum;
+  },0);
+  const bpShare=dispatchedWeight ? (bpDispatchedWeight/dispatchedWeight)*100 : 0;
+
+  $("kTotalWeight").textContent=(totalWeight/1000).toFixed(1)+" T";
+  $("kDispatchedWeight").textContent=(dispatchedWeight/1000).toFixed(1)+" T";
+  $("kBpShare").textContent=Math.round(bpShare)+"%";
+
+  // Weight shown beneath each AVTD KPI, using the exact same row population
+  // as the corresponding count KPI.
+  const weightFor=predicate=>rows.reduce((sum,r)=>predicate(r)?sum+weightKg(r):sum,0);
+  const grossWeight=weightFor(()=>true);
+  const netWeight=weightFor(r=>["dispatched","pending"].includes(mainRemark(r)));
+  const pendingWeight=weightFor(r=>mainRemark(r)==="pending");
+  const clientWeight=weightFor(r=>mainRemark(r)==="client - consignee issue");
+  const futureWeight=weightFor(r=>mainRemark(r)==="future ntd");
+  const postCutoffWeight=weightFor(r=>mainRemark(r)==="post cutoff received - tomorrow avtd");
+
+  $("kTotalWeightDetail").textContent=(grossWeight/1000).toFixed(1)+" T";
+  $("kNetWeightDetail").textContent=(netWeight/1000).toFixed(1)+" T";
+  $("kDispWeightDetail").textContent=(dispatchedWeight/1000).toFixed(1)+" T";
+  $("kPendingWeightDetail").textContent=(pendingWeight/1000).toFixed(1)+" T";
+  $("kClientWeightDetail").textContent=(clientWeight/1000).toFixed(1)+" T";
+  $("kFutureWeightDetail").textContent=(futureWeight/1000).toFixed(1)+" T";
+  $("kPostCutoffWeightDetail").textContent=(postCutoffWeight/1000).toFixed(1)+" T";
+ const netAvtd=rows.filter(r=>["dispatched","pending"].includes(mainRemark(r))).length;
+ const pendingToDispatch=rows.filter(r=>mainRemark(r)==="pending").length;
+ const clientConsigneeIssue=rows.filter(r=>mainRemark(r)==="client - consignee issue").length;
+ const futureNTD=rows.filter(r=>mainRemark(r)==="future ntd").length;
+ const postCutoffTomorrow=rows.filter(r=>{
+   if(mainRemark(r)!=="post cutoff received - tomorrow avtd") return false;
+   const st=s(val(r,"st","ST","St","Status")).trim().toLowerCase();
+   return !st.includes("dl");
+ }).length;
+ $("kTotal").textContent=fmt(rows.length);
+ $("kNetAvtd").textContent=fmt(netAvtd);
+ $("kDisp").textContent=fmt(disp);
+ $("kPendingDispatch").textContent=fmt(pendingToDispatch);
+ $("kClientConsignee").textContent=fmt(clientConsigneeIssue);
+ $("kFutureNTD").textContent=fmt(futureNTD);
+ $("kPostCutoffTomorrow").textContent=fmt(postCutoffTomorrow);
+
+ const mdValue=r=>s(val(r,"md","MD")).trim().toLowerCase();
+ const nslValue=r=>s(val(r,"NSL_REMARKS","nsl_remarks","NSL Remarks","nsl remarks")).trim().toLowerCase();
+
+ // Vehicle usage = UNIQUE vehicle/VN values only within each MD classification.
+ // Repeated shipment rows for the same vehicle are counted once.
+ const vehicleValue=r=>s(val(
+   r,
+   "vn","VN",
+   "vehicle_no","Vehicle No","Vehicle Number","vehicle_number",
+   "vehicle","Vehicle"
+ )).trim();
+
+ const uniqueVehiclesByMD=(acceptedMDs)=>{
+   const accepted=new Set(acceptedMDs);
+   return new Set(
+     rows
+       .filter(r=>accepted.has(mdValue(r)))
+       .map(vehicleValue)
+       .filter(Boolean)
+   ).size;
+ };
+
+ const regularVehicles=uniqueVehiclesByMD(["regular"]);
+ const adhocVehicles=uniqueVehiclesByMD(["adhoc","ad hoc"]);
+ const agentVehicles=uniqueVehiclesByMD(["agent"]);
+ // Damage on POD LR: any filtered LR whose NSL remark contains "damage".
+ const damagePODRows=rows.filter(r=>
+   s(val(r,"Main_Remarks","main_remarks","Main Remarks")).trim().toLowerCase()==="dispatched" &&
+   s(val(r,"ss","SS")).trim().toLowerCase()==="delivered" &&
+   nslValue(r).includes("damage")
+ );
+ const damagePOD=new Set(
+   damagePODRows
+     .map(r=>s(val(r,"mwn","MWN","waybill","Waybill","waybill_no","Waybill No","LR","lr")).trim())
+     .filter(Boolean)
+ ).size;
+ $("kRegularVehicles").textContent=fmt(regularVehicles);
+ $("kAdhocVehicles").textContent=fmt(adhocVehicles);
+ $("kAgentVehicles").textContent=fmt(agentVehicles);
+ $("kDamagePOD").textContent=fmt(damagePOD);
+
+ const pre=deliveryMetric(rows,prepaidEligible);
+  const cod=deliveryMetric(rows,codEligible);
+  const heavy=deliveryMetric(rows,heavyEligible);
+  const b2b=deliveryMetric(rows,b2bEligible);
+  const rvp=rvpPickupMetric(rows);
+
+  $("kB2BDelivered").textContent=Math.round(100*b2b.deliveredRate)+"%";
+  $("kB2BDelivered").classList.toggle("threshold-bad",100*b2b.deliveredRate<90);
+  $("kB2BDelivered").classList.toggle("threshold-good",100*b2b.deliveredRate>=90);
+  $("kB2BDetail").textContent=`${fmt(b2b.delivered)} delivered / ${fmt(b2b.attempted)} attempted | Failed ${fmt(b2b.failed)} (${Math.round(100*b2b.failureRate)}%)`;
+
+  $("kHeavyDelivered").textContent=Math.round(100*heavy.deliveredRate)+"%";
+  $("kHeavyDelivered").classList.toggle("threshold-bad",100*heavy.deliveredRate<90);
+  $("kHeavyDelivered").classList.toggle("threshold-good",100*heavy.deliveredRate>=90);
+  $("kHeavyDetail").textContent=`${fmt(heavy.delivered)} delivered / ${fmt(heavy.attempted)} attempted | Failed ${fmt(heavy.failed)} (${Math.round(100*heavy.failureRate)}%)`;
+
+  $("kPrepaidDelivered").textContent=Math.round(100*pre.deliveredRate)+"%";
+  $("kPrepaidDelivered").classList.toggle("threshold-bad",100*pre.deliveredRate<90);
+  $("kPrepaidDelivered").classList.toggle("threshold-good",100*pre.deliveredRate>=90);
+  $("kPrepaidDetail").textContent=`${fmt(pre.delivered)} delivered / ${fmt(pre.attempted)} attempted | Failed ${fmt(pre.failed)} (${Math.round(100*pre.failureRate)}%)`;
+
+  $("kCodDelivered").textContent=Math.round(100*cod.deliveredRate)+"%";
+  $("kCodDelivered").classList.toggle("threshold-bad",100*cod.deliveredRate<65);
+  $("kCodDelivered").classList.toggle("threshold-good",100*cod.deliveredRate>=65);
+  $("kCodDetail").textContent=`${fmt(cod.delivered)} delivered / ${fmt(cod.attempted)} attempted | Failed ${fmt(cod.failed)} (${Math.round(100*cod.failureRate)}%)`;
+
+  $("kRvpPicked").textContent=Math.round(100*rvp.rate)+"%";
+  $("kRvpPicked").classList.toggle("threshold-bad",100*rvp.rate<90);
+  $("kRvpPicked").classList.toggle("threshold-good",100*rvp.rate>=90);
+  $("kRvpDetail").textContent=`${fmt(rvp.picked)} picked up / ${fmt(rvp.attempted)} scheduled | Not Picked ${fmt(rvp.notPicked)} (${rvp.attempted?Math.round(100*rvp.notPicked/rvp.attempted):"0.0"}%)`;
+
+  const avtdMetrics={
+   B2B:avtdMetric(rows,"B2B"),
+   B2C:avtdMetric(rows,"B2C"),
+   Heavy:avtdMetric(rows,"HEAVY"),
+   RVP:avtdMetric(rows,"RVP")
+ };
+ const overallAvtd={
+   dispatched:avtdMetrics.B2B.dispatched+avtdMetrics.B2C.dispatched+avtdMetrics.Heavy.dispatched+avtdMetrics.RVP.dispatched,
+   total:avtdMetrics.B2B.total+avtdMetrics.B2C.total+avtdMetrics.Heavy.total+avtdMetrics.RVP.total
+ };
+ overallAvtd.rate=overallAvtd.total?overallAvtd.dispatched/overallAvtd.total:0;
+ $("kOverallAvtd").textContent=Math.round(100*overallAvtd.rate)+"%";
+ $("kOverallAvtd").classList.toggle("threshold-bad",100*overallAvtd.rate<90);
+ $("kOverallAvtd").classList.toggle("threshold-good",100*overallAvtd.rate>=90);
+ $("kOverallAvtdDetail").textContent=`${fmt(overallAvtd.dispatched)} dispatched / ${fmt(overallAvtd.total)} total`;
+ $("kB2BAvtd").textContent=Math.round(100*avtdMetrics.B2B.rate)+"%";
+ $("kB2BAvtd").classList.toggle("threshold-bad",100*avtdMetrics.B2B.rate<90);
+ $("kB2BAvtd").classList.toggle("threshold-good",100*avtdMetrics.B2B.rate>=90);
+ $("kB2BAvtdDetail").textContent=`${fmt(avtdMetrics.B2B.dispatched)} dispatched / ${fmt(avtdMetrics.B2B.total)} total`;
+ $("kB2CAvtd").textContent=Math.round(100*avtdMetrics.B2C.rate)+"%";
+ $("kB2CAvtd").classList.toggle("threshold-bad",100*avtdMetrics.B2C.rate<90);
+ $("kB2CAvtd").classList.toggle("threshold-good",100*avtdMetrics.B2C.rate>=90);
+ $("kB2CAvtdDetail").textContent=`${fmt(avtdMetrics.B2C.dispatched)} dispatched / ${fmt(avtdMetrics.B2C.total)} total`;
+ $("kHeavyAvtd").textContent=Math.round(100*avtdMetrics.Heavy.rate)+"%";
+ $("kHeavyAvtd").classList.toggle("threshold-bad",100*avtdMetrics.Heavy.rate<90);
+ $("kHeavyAvtd").classList.toggle("threshold-good",100*avtdMetrics.Heavy.rate>=90);
+ $("kHeavyAvtdDetail").textContent=`${fmt(avtdMetrics.Heavy.dispatched)} dispatched / ${fmt(avtdMetrics.Heavy.total)} total`;
+ $("kRVPAvtd").textContent=Math.round(100*avtdMetrics.RVP.rate)+"%";
+ $("kRVPAvtd").classList.toggle("threshold-bad",100*avtdMetrics.RVP.rate<90);
+ $("kRVPAvtd").classList.toggle("threshold-good",100*avtdMetrics.RVP.rate>=90);
+ $("kRVPAvtdDetail").textContent=`${fmt(avtdMetrics.RVP.dispatched)} dispatched / ${fmt(avtdMetrics.RVP.total)} total`;
+ $("avtdTable").innerHTML=avtdSummaryTable(avtdMetrics);
+
+ const vnGroups=vnPerformanceGroup(rows);
+ $("vnBestTable").innerHTML=vnTable(vnGroups,"best");
+ $("vnBottomTable").innerHTML=vnTable(vnGroups,"bottom");
+ const fails=failureRows(rows);
+ const rg=performanceGroup(fails,r=>val(r,"NSL_REMARKS","Main_Remarks")).sort((a,b)=>{
+   const af=a.prepaid.failed+a.cod.failed+a.b2b.failed, bf=b.prepaid.failed+b.cod.failed+b.b2b.failed;
+   return bf-af;
+ });
+ $("reasonTable").innerHTML=failureContributionTable(rg,"Failure Reason");
+ let hasFlare=raw.some(r=>s(val(r,"flare_info_display_name")));
+ $("flareTable").innerHTML=hasFlare?sortControls("flare")+perfTable(performanceGroup(rows,r=>val(r,"flare_info_display_name")),"Flare",5,perfSort.flare):"<span class='muted'>flare_info_display_name is not present in this upload.</span>";
+}
+
+
+function options(id,values,label){
+ const el=$(id);el.innerHTML=`<option value="">${label}</option>`+[...new Set(values.map(s).filter(Boolean))].sort().map(x=>`<option>${escapeHtml(x)}</option>`).join("");
+}
+function parseCSVText(text){
+ const matrix=[];
+ let row=[],field="",quoted=false;
+ for(let i=0;i<text.length;i++){
+  const ch=text[i];
+  if(quoted){
+   if(ch==='"' && text[i+1]==='"'){field+='"';i++;}
+   else if(ch==='"'){quoted=false;}
+   else field+=ch;
+  }else{
+   if(ch==='"') quoted=true;
+   else if(ch===','){row.push(field);field="";}
+   else if(ch==='\n'){row.push(field);matrix.push(row);row=[];field="";}
+   else if(ch!=='\r') field+=ch;
+  }
+ }
+ if(field!=="" || row.length){row.push(field);matrix.push(row);}
+ if(!matrix.length)return [];
+ const headers=matrix[0].map((h,i)=>{
+   h=s(h).replace(/^\uFEFF/,"").trim();
+   return h || `Column_${i+1}`;
+ });
+ const rows=[];
+ for(let i=1;i<matrix.length;i++){
+   const cells=matrix[i];
+   if(!cells.some(v=>s(v).trim()!==""))continue;
+   const obj={};
+   for(let j=0;j<headers.length;j++)obj[headers[j]]=cells[j]??"";
+   rows.push(obj);
+ }
+ return rows;
+}
+function hasMWNColumn(rows){
+ if(!rows.length)return false;
+ return Object.keys(rows[0]).some(k=>k.trim().toLowerCase()==="mwn");
+}
+function finishFileLoad(f){
+ if(!raw.length)throw new Error("No data containing an MWN column was found.");
+ options("center",raw.map(r=>facilityValue(r)),"All Centers");
+ $("center").value="";
+ options("pdt",raw.map(r=>val(r,"pdt")),"All PDT");
+ options("md",raw.map(r=>val(r,"md","MD")),"All MDs");
+ options("pt",raw.map(r=>val(r,"PT","pt")),"All PTs");
+ options("avtd",raw.map(r=>val(r,"AVTD_Cat")),"All AVTD Categories");
+ options("vn",raw.map(r=>val(r,"vn")),"All VNs");
+ options("flare",raw.map(r=>val(r,"flare_info_display_name")),"All Flares");
+ $("status").textContent=`Loaded ${fmt(raw.length)} shipments from ${f.name}. Processing happens in your browser.`;
+ $("app").style.display="block";
+ render();
+}
+
+let lastGoogleSheetUrl="";
+
+function googleSheetCSVUrl(input){
+ const u=s(input).trim();
+ if(!u) throw new Error("Paste a Google Sheet link first.");
+ const m=u.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+ if(!m) throw new Error("Invalid Google Sheet link.");
+ const id=m[1];
+ let gid="";
+ try{
+   const parsed=new URL(u);
+   gid=parsed.searchParams.get("gid")||"";
+   if(!gid && parsed.hash){
+     const hm=parsed.hash.match(/gid=(\d+)/);
+     if(hm) gid=hm[1];
+   }
+ }catch(e){}
+ // Use Google Visualization CSV endpoint. This works better from GitHub Pages than /export?format=csv.
+ const base=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv`;
+ return base+(gid?`&gid=${encodeURIComponent(gid)}`:"");
+}
+
+async function loadGoogleSheet(url,isRefresh=false){
+ const status=$("status");
+ status.textContent=isRefresh?"Refreshing Google Sheet...":"Loading Google Sheet...";
+ try{
+   const response=await fetch(googleSheetCSVUrl(url),{cache:"no-store"});
+   if(!response.ok) throw new Error(`Access failed (${response.status}). Make sure the Sheet is shared as Viewer to anyone with the link.`);
+   const text=await response.text();
+   if(/^\s*<!doctype html/i.test(text)||/^\s*<html/i.test(text))
+     throw new Error("Google returned a sign-in/access page. Enable link viewing and try again.");
+   const rows=parseCSVText(text);
+   if(!hasMWNColumn(rows)) throw new Error("No MWN column was found in the selected Google Sheet tab.");
+   raw=rows;
+   raw.forEach(r=>r.Source_Sheet="Google Sheet");
+   lastGoogleSheetUrl=url;
+   try{localStorage.setItem("avtdLastGoogleSheetUrl",url)}catch(e){}
+   finishFileLoad({name:"Google Sheet"});
+   $("refreshGsheetBtn").disabled=false;
+   $("gsheetRefreshInfo").textContent="Last refreshed: "+new Date().toLocaleString();
+   status.textContent=`Loaded ${fmt(raw.length)} shipments from Google Sheet.`;
+ }catch(err){
+   console.error(err);
+   status.textContent="Could not load Google Sheet: "+(err?.message||String(err));
+ }
+}
+
+$("loadGsheetBtn").addEventListener("click",()=>loadGoogleSheet($("gsheetUrl").value.trim(),false));
+$("refreshGsheetBtn").addEventListener("click",()=>loadGoogleSheet(lastGoogleSheetUrl||$("gsheetUrl").value.trim(),true));
+$("gsheetUrl").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("loadGsheetBtn").click();}});
+try{
+ const saved=localStorage.getItem("avtdLastGoogleSheetUrl");
+ if(saved){$("gsheetUrl").value=saved;lastGoogleSheetUrl=saved;$("refreshGsheetBtn").disabled=false;}
+}catch(e){}
+
+$("file").addEventListener("change",async e=>{
+ const f=e.target.files[0];
+ if(!f)return;
+ $("status").textContent="Reading file...";
+ try{
+  raw=[];
+  const lower=f.name.toLowerCase();
+  if(lower.endsWith(".csv")){
+    // CSVs are parsed directly instead of passing them through SheetJS.
+    // This avoids the browser call-stack failure seen on large CSV dumps.
+    const text=await f.text();
+    const rows=parseCSVText(text);
+    if(!hasMWNColumn(rows))throw new Error("CSV does not contain an MWN column.");
+    rows.forEach(r=>r.Source_Sheet="CSV");
+    raw=rows;
+  }else{
+    const buf=await f.arrayBuffer();
+    const wb=XLSX.read(buf,{type:"array",cellDates:true});
+    for(const name of wb.SheetNames){
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{defval:""});
+      if(hasMWNColumn(rows)){
+        rows.forEach(r=>r.Source_Sheet=name);
+        raw.push(...rows);
+      }
+    }
+  }
+  finishFileLoad(f);
+ }catch(err){
+  console.error(err);
+  $("status").textContent="Could not read file: "+(err && err.message ? err.message : String(err));
+ }
+});
+
+
+function updateFacilityDependentFilters(){
+ const center=norm($("center").value);
+ const scoped=center ? raw.filter(r=>norm(facilityValue(r))===center) : raw;
+ const currentVN=$("vn").value;
+ const currentFlare=$("flare").value;
+
+ options("vn",scoped.map(r=>val(r,"vn","VN")),"All VNs");
+ options("flare",scoped.map(r=>val(r,"flare_info_display_name")),"All Flares");
+
+ const vnValues=[...$("vn").options].map(o=>o.value);
+ const flareValues=[...$("flare").options].map(o=>o.value);
+ $("vn").value=vnValues.includes(currentVN)?currentVN:"";
+ $("flare").value=flareValues.includes(currentFlare)?currentFlare:"";
+}
+
+$("center").addEventListener("change",()=>{
+ updateFacilityDependentFilters();
+ render();
+});
+["pdt","md","pt","avtd","vn","flare"].forEach(id=>$(id).addEventListener("change",render));
+$("search").addEventListener("input",render);
+$("reset").addEventListener("click",()=>{
+ ["center","pdt","md","pt","avtd","vn","flare"].forEach(id=>$(id).value="");
+ $("search").value="";
+ updateFacilityDependentFilters();
+ render();
+});
+
+
+function getSavedTheme(){
+  try{return localStorage.getItem("avtdTheme") || "light";}catch(e){return "light";}
+}
+function saveTheme(mode){
+  try{localStorage.setItem("avtdTheme",mode);}catch(e){}
+}
+function applyTheme(mode){
+  const isDark=mode==="dark";
+  document.body.classList.toggle("dark",isDark);
+  const btn=document.getElementById("themeToggle");
+  if(btn){
+    btn.textContent=isDark ? "☀" : "☾";
+    btn.title=isDark ? "Switch to light mode" : "Switch to dark mode";
+    btn.setAttribute("aria-label",btn.title);
+  }
+  saveTheme(mode);
+}
+function initThemeToggle(){
+  const btn=document.getElementById("themeToggle");
+  if(!btn) return;
+  btn.onclick=function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    applyTheme(document.body.classList.contains("dark") ? "light" : "dark");
+    if(typeof raw!=="undefined" && raw.length && typeof render==="function"){
+      render();
+    }
+  };
+  applyTheme(getSavedTheme());
+}
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",initThemeToggle,{once:true});
+}else{
+  initThemeToggle();
+}
+
+$("eodDownload").addEventListener("click",downloadLMEODPNG);
+const lmTopEodBtn=document.getElementById("lmTopEodBtn");
+if(lmTopEodBtn) lmTopEodBtn.addEventListener("click",downloadLMEODPNG);
+async function downloadLMEODPNG(){
+ if(!raw.length)return;
+ const btn=document.activeElement && document.activeElement.tagName==="BUTTON" ? document.activeElement : $("eodDownload");
+ const oldText=btn?btn.textContent:"";
+ const now=new Date();
+ const ts=now.toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+ const genEl=document.getElementById('lmGeneratedAt'); if(genEl)genEl.textContent='Report Generated: '+ts;
+ const titleEl=document.getElementById('lmMainTitle');
+ const selectedFacility=s(document.getElementById('center')?.value)||'All Facilities';
+ const dashboardTitle=titleEl?titleEl.textContent:'LM Performance Dashboard';
+ if(titleEl) titleEl.textContent=(selectedFacility && selectedFacility!=='All Facilities') ? `${selectedFacility} LM EOD Report` : 'LM EOD Report';
+ try{
+   if(btn){btn.disabled=true;btn.textContent='Preparing EOD...'}
+   document.body.classList.add('exporting');
+   await new Promise(r=>setTimeout(r,120));
+   const canvas=await html2canvas($("app"),{scale:1.5,useCORS:true,backgroundColor:getComputedStyle(document.body).getPropertyValue('--bg').trim()||'#f4f7fb',windowWidth:1320,scrollX:0,scrollY:0});
+   const a=document.createElement('a');
+   const pad=n=>String(n).padStart(2,'0');
+   const safeFacility=(selectedFacility||'All_Facilities').replace(/[^a-z0-9_-]+/gi,'_').replace(/^_|_$/g,'');
+   a.download=`${safeFacility}_LM_EOD_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}.png`;
+   a.href=canvas.toDataURL('image/png');a.click();
+ }catch(e){console.error(e);alert('Unable to generate AVTD EOD PNG: '+e.message)}
+ finally{document.body.classList.remove('exporting');if(titleEl)titleEl.textContent=dashboardTitle;if(btn){btn.disabled=false;btn.textContent=oldText}}
+}
+
+
+
+// Closure KPI waybill drill-down
+function closureWaybillRows(type){
+  const rows=filtered();
+  const target=type==='pending' ? 'pending' : (type==='client' ? 'client - consignee issue' : 'future ntd');
+  return rows.filter(r=>s(val(r,"Main_Remarks","main_remarks","Main Remarks")).trim().toLowerCase()===target);
+}
+function closureWaybillValue(r){
+  return s(val(r,"mwn","MWN","waybill","Waybill","waybill_no","Waybill No","LR","lr","Shipment Type","Master waybill number")).trim();
+}
+function closureClientValue(r){
+  return s(val(r,"cl","CL","Client","client name","Client Name")).trim();
+}
+function closurePdtValue(r){
+  return s(val(r,"pdt","PDT","Product Type","Product-Type","Product Type/PDT")).trim();
+}
+function parseClosureFpd(v){
+  if(v===null||v===undefined||String(v).trim()==="") return null;
+  if(v instanceof Date && !isNaN(v.getTime())) return v;
+  const raw=String(v).trim();
+  // Excel serial date/time.
+  if(/^\d+(?:\.\d+)?$/.test(raw)){
+    const n=Number(raw);
+    if(Number.isFinite(n) && n>20000 && n<100000){
+      try{
+        const d=XLSX.SSF.parse_date_code(n);
+        if(d){return new Date(d.y,d.m-1,d.d,d.H||0,d.M||0,Math.floor(d.S||0));}
+      }catch(e){}
+    }
+  }
+  // ISO / browser-recognized date-time.
+  let d=new Date(raw);
+  if(!isNaN(d.getTime())) return d;
+  // Common DD-MM-YYYY / DD/MM/YYYY formats, optionally with time.
+  const m=raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})(?:[ T](\d{1,2})(?::(\d{2}))?(?::(\d{2}))?)?$/);
+  if(m){
+    d=new Date(Number(m[3]),Number(m[2])-1,Number(m[1]),Number(m[4]||0),Number(m[5]||0),Number(m[6]||0));
+    if(!isNaN(d.getTime())) return d;
+  }
+  return null;
+}
+function closureAgingDays(r){
+  const fpd=parseClosureFpd(val(r,"fpd","FPD","Fpd"));
+  if(!fpd) return null;
+  // Equivalent to Excel =TODAY()-FPD, preserving the fractional day when FPD has time.
+  const today=new Date();
+  const todayMidnight=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  return (todayMidnight.getTime()-fpd.getTime())/86400000;
+}
+function openClosureWaybillModal(type){
+  const modal=document.getElementById("closureWaybillModal");
+  const body=document.getElementById("closureWaybillBody");
+  const count=document.getElementById("closureWaybillCount");
+  const title=document.getElementById("closureWaybillTitle");
+  if(!modal||!body||!count||!title) return;
+  const labels={pending:"Pending to Dispatch",client:"Client - Consignee Issue",future:"Future NTD"};
+  const seen=new Set(), unique=[];
+  closureWaybillRows(type).forEach(r=>{
+    const waybill=closureWaybillValue(r);
+    if(!waybill||seen.has(waybill)) return;
+    seen.add(waybill);
+    unique.push({waybill, pdt:closurePdtValue(r), client:closureClientValue(r), aging:closureAgingDays(r)});
+  });
+  // Highest ageing first; rows without a valid FPD are kept at the bottom.
+  unique.sort((a,b)=>{
+    const aa=a.aging===null ? -Infinity : a.aging;
+    const bb=b.aging===null ? -Infinity : b.aging;
+    return bb-aa || String(a.waybill).localeCompare(String(b.waybill),undefined,{numeric:true});
+  });
+  window.currentClosureWaybills=unique.map(x=>x.waybill);
+  title.textContent=labels[type]+" — Waybills";
+  count.textContent=unique.length+" unique waybill"+(unique.length===1?"":"s")+" • sorted by ageing";
+  body.innerHTML=unique.length
+    ? unique.map((x,i)=>{
+        const aging=x.aging===null ? "—" : x.aging.toFixed(2);
+        const agingClass=x.aging!==null && x.aging>2 ? "closureAgingBad" : "";
+        return `<tr><td>${i+1}</td><td><b>${escapeHtml(x.waybill)}</b></td><td>${escapeHtml(x.pdt||"—")}</td><td>${escapeHtml(x.client||"—")}</td><td class="${agingClass}"><b>${aging}</b></td></tr>`;
+      }).join("")
+    : '<tr><td colspan="5" class="muted">No waybills found for the current filters.</td></tr>';
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden","false");
+}
+async function copyClosureWaybills(){
+  const list=(window.currentClosureWaybills||[]).filter(Boolean);
+  const btn=document.getElementById("closureCopyBtn");
+  if(!list.length){if(btn){btn.textContent="No Waybills";setTimeout(()=>btn.textContent="Copy Waybill List",1200);}return;}
+  try{
+    const text=list.join("\n");
+    if(navigator.clipboard&&window.isSecureContext) await navigator.clipboard.writeText(text);
+    else {const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);ta.focus();ta.select();document.execCommand("copy");ta.remove();}
+    if(btn){btn.textContent="Copied ✓";setTimeout(()=>btn.textContent="Copy Waybill List",1400);}
+  }catch(e){if(btn){btn.textContent="Copy failed";setTimeout(()=>btn.textContent="Copy Waybill List",1400);}}
+}
+function closeClosureWaybillModal(){
+  const modal=document.getElementById("closureWaybillModal");
+  if(!modal) return;
+  modal.classList.remove("open");modal.setAttribute("aria-hidden","true");
+}
+document.addEventListener("DOMContentLoaded",()=>{
+  const modal=document.getElementById("closureWaybillModal");
+  if(modal) modal.addEventListener("click",e=>{if(e.target===modal) closeClosureWaybillModal();});
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape") closeClosureWaybillModal();});
+
+// Damage on POD MWN drill-down
+function damageRows(){
+  return filtered().filter(r=>{
+    const remark=s(val(r,"NSL_REMARKS","nsl_remarks","NSL Remarks","nsl remarks")).trim().toLowerCase();
+    const mainRemark=s(val(r,"Main_Remarks","main_remarks","Main Remarks")).trim().toLowerCase();
+    const ss=s(val(r,"ss","SS")).trim().toLowerCase();
+    return mainRemark==="dispatched" && ss==="delivered" && remark.includes("damage");
+  });
+}
+function damageMWNValue(r){
+  return s(val(r,"mwn","MWN","waybill","Waybill","waybill_no","Waybill No","LR","lr")).trim();
+}
+function openDamageModal(){
+  const modal=document.getElementById("damageModal");
+  const body=document.getElementById("damageMWNBody");
+  const count=document.getElementById("damageModalCount");
+  if(!modal || !body || !count) return;
+
+  const seen=new Set();
+  const unique=[];
+  damageRows().forEach(r=>{
+    const mwn=damageMWNValue(r);
+    if(!mwn || seen.has(mwn)) return;
+    seen.add(mwn);
+    unique.push({
+      mwn:mwn,
+      remark:s(val(r,"NSL_REMARKS","nsl_remarks","NSL Remarks","nsl remarks")).trim()
+    });
+  });
+
+  window.currentDamageMWNs=unique.map(x=>x.mwn);
+  count.textContent=unique.length+" unique MWN"+(unique.length===1?"":"s");
+  body.innerHTML=unique.length
+    ? unique.map((x,i)=>`<tr><td>${i+1}</td><td><b>${escapeHtml(x.mwn)}</b></td><td>${escapeHtml(x.remark)}</td></tr>`).join("")
+    : '<tr><td colspan="3" class="muted">No Damage on POD MWNs found for the current filters.</td></tr>';
+
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden","false");
+}
+
+async function copyDamageMWNs(){
+  const list=(window.currentDamageMWNs||[]).filter(Boolean);
+  const btn=document.getElementById("copyMWNBtn");
+  if(!list.length){
+    if(btn){btn.textContent="No MWNs";setTimeout(()=>btn.textContent="Copy MWN List",1200);}
+    return;
+  }
+  const text=list.join("\n");
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+    }else{
+      const ta=document.createElement("textarea");
+      ta.value=text;
+      ta.style.position="fixed";
+      ta.style.left="-9999px";
+      document.body.appendChild(ta);
+      ta.focus();ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    if(btn){btn.textContent="Copied ✓";setTimeout(()=>btn.textContent="Copy MWN List",1400);}
+  }catch(e){
+    if(btn){btn.textContent="Copy failed";setTimeout(()=>btn.textContent="Copy MWN List",1400);}
+  }
+}
+
+function closeDamageModal(){
+  const modal=document.getElementById("damageModal");
+  if(!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden","true");
+}
+document.addEventListener("DOMContentLoaded",()=>{
+  const modal=document.getElementById("damageModal");
+  if(modal){
+    modal.addEventListener("click",e=>{
+      if(e.target===modal) closeDamageModal();
+    });
+  }
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape") closeDamageModal();
+});
+
+// Local HTML password gate.
+// IMPORTANT: this is client-side convenience protection only; anyone with the HTML source
+// can inspect the code. For real user-specific security, host the app behind authentication.
+const DEFAULT_DASHBOARD_PASSWORD="AVTD@2026";
+const RESET_PASSWORD="7874";
+function getDashboardPassword(){
+  return localStorage.getItem("avtdDashboardPassword") || DEFAULT_DASHBOARD_PASSWORD;
+}
+function unlockDashboard(){
+ const entered=document.getElementById("dashboardPassword").value;
+ if(entered===getDashboardPassword()){
+   sessionStorage.setItem("avtdUnlocked","1");
+   document.body.classList.remove("locked");
+   document.getElementById("loginGate").style.display="none";
+ }else{
+   document.getElementById("loginError").textContent="Incorrect password.";
+   document.getElementById("dashboardPassword").select();
+ }
+}
+
+function openResetPassword(){
+  document.getElementById("resetPasswordMessage").textContent="";
+  document.getElementById("currentPasswordInput").value="";
+  document.getElementById("newPasswordInput").value="";
+  document.getElementById("confirmPasswordInput").value="";
+  document.getElementById("resetPasswordModal").classList.add("open");
+  document.getElementById("resetPasswordModal").setAttribute("aria-hidden","false");
+  setTimeout(()=>document.getElementById("currentPasswordInput").focus(),50);
+}
+function closeResetPassword(){
+  document.getElementById("resetPasswordModal").classList.remove("open");
+  document.getElementById("resetPasswordModal").setAttribute("aria-hidden","true");
+}
+function saveNewPassword(){
+  const current=document.getElementById("currentPasswordInput").value;
+  const next=document.getElementById("newPasswordInput").value;
+  const confirm=document.getElementById("confirmPasswordInput").value;
+  const msg=document.getElementById("resetPasswordMessage");
+
+  if(current!==RESET_PASSWORD){
+    msg.textContent="Reset Password is incorrect.";
+    msg.className="resetError";
+    return;
+  }
+  if(next.length<6){
+    msg.textContent="New password must be at least 6 characters.";
+    msg.className="resetError";
+    return;
+  }
+  if(next!==confirm){
+    msg.textContent="New passwords do not match.";
+    msg.className="resetError";
+    return;
+  }
+  localStorage.setItem("avtdDashboardPassword",next);
+  sessionStorage.removeItem("avtdUnlocked");
+  msg.textContent="Password updated successfully. Use the new password to login.";
+  msg.className="resetSuccess";
+  document.getElementById("dashboardPassword").value="";
+  setTimeout(closeResetPassword,1400);
+}
+
+
+
+document.getElementById("resetPasswordModal").addEventListener("click",e=>{
+  if(e.target===document.getElementById("resetPasswordModal")) closeResetPassword();
+});
+
+
+
+if(sessionStorage.getItem("avtdUnlocked")==="1"){
+ document.body.classList.remove("locked");
+ document.getElementById("loginGate").style.display="none";
+}
+
+</script>
+
+
+<div id="resetPasswordModal" class="resetPasswordModal" aria-hidden="true">
+  <div class="resetPasswordBox">
+    <div class="resetPasswordHead">
+      <h3>Reset Dashboard Password</h3>
+      <button type="button" id="resetPasswordClose" class="resetPasswordClose" onclick="AVTDAuth.closeReset()">×</button>
+    </div>
+    <p class="muted">Enter the Reset Password, then choose a new dashboard login password.</p>
+    <input id="currentPasswordInput" type="password" placeholder="Reset Password">
+    <input id="newPasswordInput" type="password" placeholder="New password">
+    <input id="confirmPasswordInput" type="password" placeholder="Confirm new password">
+    <button type="button" id="savePasswordBtn" onclick="AVTDAuth.saveReset()">Save New Password</button>
+    <div id="resetPasswordMessage"></div>
+  </div>
+</div>
+
+<div id="closureWaybillModal" class="closureWaybillModal" aria-hidden="true">
+  <div class="closureWaybillBox">
+    <div class="closureWaybillHead">
+      <div><h3 id="closureWaybillTitle">Waybills</h3><div class="muted" id="closureWaybillCount"></div></div>
+      <div class="closureWaybillActions">
+        <button type="button" id="closureCopyBtn" class="copyMWNBtn closureCopyBtn" onclick="copyClosureWaybills()">Copy Waybill List</button>
+        <button type="button" class="damageClose" onclick="closeClosureWaybillModal()" aria-label="Close">×</button>
+      </div>
+    </div>
+    <div class="closureWaybillTableWrap">
+      <table><thead><tr><th>#</th><th>Waybill / MWN</th><th>PDT</th><th>Client</th><th>Aging Days</th></tr></thead><tbody id="closureWaybillBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<div id="damageModal" class="damageModal" aria-hidden="true">
+  <div class="damageModalBox">
+    <div class="damageModalHead">
+      <div>
+        <h3>Damage on POD — MWN</h3>
+        <div class="muted" id="damageModalCount"></div>
+      </div>
+      <div class="damageModalActions">
+        <button type="button" id="copyMWNBtn" class="copyMWNBtn" onclick="copyDamageMWNs()">Copy MWN List</button>
+        <button type="button" id="damageClose" class="damageClose" onclick="closeDamageModal()" aria-label="Close">×</button>
+      </div>
+    </div>
+    <div class="damageTableWrap">
+      <table>
+        <thead><tr><th>#</th><th>MWN</th><th>NSL Remark</th></tr></thead>
+        <tbody id="damageMWNBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(function(){
+  const DEFAULT_LOGIN="AVTD@2026";
+  const RESET_CODE="7874";
+  const LOGIN_KEY="avtdDashboardPassword";
+
+  function el(id){ return document.getElementById(id); }
+  function loginPassword(){ return localStorage.getItem(LOGIN_KEY) || DEFAULT_LOGIN; }
+
+  window.AVTDAuth={
+    login:function(){
+      const input=el("dashboardPassword"), err=el("loginError"), gate=el("loginGate");
+      if(!input || !gate) return;
+      if(input.value===loginPassword()){
+        sessionStorage.setItem("avtdUnlocked","1");
+        document.body.classList.remove("locked");
+        gate.style.display="none";
+        if(err) err.textContent="";
+      }else{
+        if(err) err.textContent="Incorrect password.";
+        input.focus(); input.select();
+      }
+    },
+    openReset:function(){
+      const modal=el("resetPasswordModal");
+      if(!modal) return;
+      ["currentPasswordInput","newPasswordInput","confirmPasswordInput"].forEach(id=>{if(el(id)) el(id).value="";});
+      if(el("resetPasswordMessage")) el("resetPasswordMessage").textContent="";
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden","false");
+      setTimeout(()=>{if(el("currentPasswordInput")) el("currentPasswordInput").focus();},50);
+    },
+    closeReset:function(){
+      const modal=el("resetPasswordModal");
+      if(!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden","true");
+    },
+    saveReset:function(){
+      const reset=el("currentPasswordInput")?.value || "";
+      const next=el("newPasswordInput")?.value || "";
+      const confirm=el("confirmPasswordInput")?.value || "";
+      const msg=el("resetPasswordMessage");
+      if(reset!==RESET_CODE){
+        if(msg){msg.textContent="Reset Password is incorrect.";msg.className="resetError";}
+        return;
+      }
+      if(next.length<4){
+        if(msg){msg.textContent="New login password must be at least 4 characters.";msg.className="resetError";}
+        return;
+      }
+      if(next!==confirm){
+        if(msg){msg.textContent="New passwords do not match.";msg.className="resetError";}
+        return;
+      }
+      localStorage.setItem(LOGIN_KEY,next);
+      sessionStorage.removeItem("avtdUnlocked");
+      if(msg){msg.textContent="Login password changed successfully.";msg.className="resetSuccess";}
+      if(el("dashboardPassword")) el("dashboardPassword").value="";
+      setTimeout(()=>window.AVTDAuth.closeReset(),900);
+    }
+  };
+
+  document.addEventListener("DOMContentLoaded",function(){
+    const pw=el("dashboardPassword");
+    if(pw) pw.addEventListener("keydown",e=>{if(e.key==="Enter") window.AVTDAuth.login();});
+
+    const modal=el("resetPasswordModal");
+    if(modal) modal.addEventListener("click",e=>{if(e.target===modal) window.AVTDAuth.closeReset();});
+
+    if(sessionStorage.getItem("avtdUnlocked")==="1"){
+      document.body.classList.remove("locked");
+      if(el("loginGate")) el("loginGate").style.display="none";
+    }else{
+      document.body.classList.add("locked");
+      if(el("loginGate")) el("loginGate").style.display="flex";
+    }
+  });
+})();
+</script>
+
+
+<script>
+function switchModule(which){
+ const fm=which==='FM';
+ const tomorrow=which==='TOMORROW_LOAD';
+ document.getElementById('lmTabBtn')?.classList.toggle('active',!fm&&!tomorrow);
+ document.getElementById('fmTabBtn')?.classList.toggle('active',fm);
+ document.getElementById('tomorrowLoadTabBtn')?.classList.toggle('active',tomorrow);
+ const lu=document.getElementById('lmUpload'), la=document.getElementById('app'), fmEl=document.getElementById('fmModule'), tlEl=document.getElementById('lmTomorrowModule');
+ if(lu) lu.style.display=(fm||tomorrow)?'none':'';
+ if(la) la.style.display=(fm||tomorrow)?'none':(raw.length?'block':'none');
+ if(fmEl) fmEl.style.display=fm?'block':'none';
+ if(tlEl) tlEl.style.display=tomorrow?'block':'none';
+}
+const FM={rows:[],feSort:{key:'pct',dir:'desc'},ftpFeSort:{key:'pct',dir:'desc'},clientSort:{key:'pct',dir:'desc'},ftpClientSort:{key:'pct',dir:'desc'}};
+const FM_BIKERS=new Set(['r manoj','gowtham rao g','chandru l','pavan r','s keshava']);
+function fmFeType(name){return FM_BIKERS.has(fmS(name).toLowerCase())?'Biker':'Regular'}
+function fmS(v){return String(v??'').trim()}
+function fmV(r,...keys){for(const k of keys){if(r[k]!==undefined&&r[k]!==null&&fmS(r[k])!=='')return r[k]}return ''}
+function fmBoolYes(v){const x=fmS(v).toLowerCase();return x==='yes'||x==='true'||x==='1'}
+function fmIsNotPicked(r){return fmS(fmV(r,'Status')).toLowerCase()==='not picked'}
+function fmOtpGeoInSlot(r){const rem=fmS(fmV(r,'Remarks')).toLowerCase();return fmIsNotPicked(r)&&fmBoolYes(fmV(r,'In Slot'))&&(rem.includes('otp')||rem.includes('geofence'))}
+function fmPartial(r){return fmIsNotPicked(r)&&fmS(fmV(r,'Remarks')).toLowerCase().includes('shipment not ready for pickup-multi client seller partial handover')}
+function fmFedex(r){return fmIsNotPicked(r)&&fmS(fmV(r,'Client')).toUpperCase()==='FEDEX EXPORT'}
+function fmFailure(r){if(!fmIsNotPicked(r))return false;if(fmOtpGeoInSlot(r))return false;if(fmPartial(r))return false;if(fmFedex(r))return false;return true}
+function fmActualPackages(r){const n=Number(fmV(r,'Actual Package Count'));return Number.isFinite(n)?n:0}
+function fmMetric(rows){const total=rows.length,picked=rows.filter(r=>fmS(fmV(r,'Status')).toLowerCase()==='picked up').length,verified=rows.filter(fmOtpGeoInSlot).length,partial=rows.filter(fmPartial).filter(r=>!fmOtpGeoInSlot(r)).length,fedex=rows.filter(fmFedex).filter(r=>!fmOtpGeoInSlot(r)&&!fmPartial(r)).length,fail=rows.filter(fmFailure).length,validated=verified+partial+fedex,success=total-fail,shipments=rows.reduce((a,r)=>a+fmActualPackages(r),0);return{total,picked,verified,partial,fedex,validated,fail,success,shipments,pct:total?100*success/total:0,failPct:total?100*fail/total:0}}
+function fmReason(r){return fmS(fmV(r,'Remarks'))||'Blank'}
+function fmReasonTable(rows){const f=rows.filter(fmFailure),m=new Map();f.forEach(r=>m.set(fmReason(r),(m.get(fmReason(r))||0)+1));const a=[...m].sort((x,y)=>y[1]-x[1]);return `<table><thead><tr><th>Remarks</th><th>Failures</th><th>Contribution</th></tr></thead><tbody>${a.map(([k,n])=>`<tr><td>${escapeHtml(k)}</td><td>${n}</td><td><b>${f.length?(100*n/f.length).toFixed(1):'0.0'}%</b></td></tr>`).join('')}</tbody></table>`}
+function fmFailureQualitative(reason){const q=fmS(reason),l=q.toLowerCase();if(l.includes('not attempted'))return 'Pickup was recorded as not attempted.';if(l.includes('shipper unavailable'))return 'Pickup could not be completed as the shipper was marked unavailable.';if(l.includes('shipment not ready'))return 'Pickup could not be completed as the shipment was marked not ready for pickup.';if(l.includes('relocat'))return 'Pickup was recorded with a shipper relocation remark.';if(l.includes('cancel'))return 'Pickup was recorded with a cancellation-related remark.';return `Pickup failure was recorded under the remark “${q}”.`;}
+function fmFailureNarrativeHtml(rows){const failures=rows.filter(fmFailure);if(!failures.length)return '<div class="fmNoFailure"><div class="fmCheck">✓</div><b>No failures recorded</b></div>';const reasons=new Map();failures.forEach(r=>{const reason=fmReason(r);if(!reasons.has(reason))reasons.set(reason,[]);reasons.get(reason).push(r)});const sorted=[...reasons.entries()].sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]));return `<div class="fmKeyReasons"><b>Key Reasons</b><div class="muted">Failure reasons are summarized from the uploaded report remarks only.</div></div>${sorted.map(([reason,rr])=>{const clients=new Map();rr.forEach(r=>{const c=fmS(fmV(r,'Client'))||'Blank';clients.set(c,(clients.get(c)||0)+1)});const cs=[...clients.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).map(([c,n])=>`${escapeHtml(c)} (${n})`).join(', ');const pct=failures.length?100*rr.length/failures.length:0;return `<div class="fmFailureItem"><div class="fmFailureReason"><b>${escapeHtml(reason)}</b> <span>${rr.length} | ${pct.toFixed(1)}%</span></div><div class="fmQual">${escapeHtml(fmFailureQualitative(reason))}</div><div class="fmClients"><b>Contributing Clients:</b> ${cs||'—'}</div></div>`}).join('')}`}
+function fmFeData(rows){const m=new Map();rows.forEach(r=>{const k=fmS(fmV(r,'Assigned FEs'))||'Blank';if(!m.has(k))m.set(k,[]);m.get(k).push(r)});return [...m].map(([name,v])=>({name,type:fmFeType(name),...fmMetric(v)}))}
+function fmSortRows(data,state){const mult=state.dir==='asc'?1:-1;return data.sort((a,b)=>{let av=a[state.key],bv=b[state.key];if(['name','type','client'].includes(state.key)){av=String(av||'').toLowerCase();bv=String(bv||'').toLowerCase();const c=av.localeCompare(bv);return c?mult*c:(b.total-a.total)}if(av===bv)return b.total-a.total;return mult*(av-bv)})}
+function fmSortArrow(state,key){return state.key===key?(state.dir==='asc'?' ▲':' ▼'):''}
+function fmPctHtml(p){const n=Number(p)||0;return `<b class="${n<90?'fmPctBad':'fmPctGood'}">${n.toFixed(1)}%</b>`}
+function fmFeMiniTable(data,emptyText){return `<table><thead><tr><th>FE</th><th>PUR Count</th><th>Picked Up + Validated</th><th>Failed</th><th>Picked Up %</th><th>Shipment Picked Count</th></tr></thead><tbody>${data.length?data.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${x.total}</td><td>${x.success}</td><td>${x.fail}</td><td>${fmPctHtml(x.pct)}</td><td><b>${Math.round(x.shipments).toLocaleString()}</b></td></tr>`).join(''):`<tr><td colspan="6" class="muted">${emptyText}</td></tr>`}</tbody></table>`}
+function fmFeTable(rows,scope='main'){const all=fmFeData(rows);if(scope==='ftp'){const state=FM.ftpFeSort;const data=fmSortRows([...all],state);return `<table><thead><tr><th class="fmSortable" onclick="fmToggleFeSort('ftp','name')">FE${fmSortArrow(state,'name')}</th><th class="fmSortable" onclick="fmToggleFeSort('ftp','total')">PUR Count${fmSortArrow(state,'total')}</th><th class="fmSortable" onclick="fmToggleFeSort('ftp','success')">Picked Up + Validated${fmSortArrow(state,'success')}</th><th class="fmSortable" onclick="fmToggleFeSort('ftp','fail')">Failed${fmSortArrow(state,'fail')}</th><th class="fmSortable" onclick="fmToggleFeSort('ftp','pct')">Picked Up %${fmSortArrow(state,'pct')}</th><th class="fmSortable" onclick="fmToggleFeSort('ftp','shipments')">Shipment Picked Count${fmSortArrow(state,'shipments')}</th></tr></thead><tbody>${data.length?data.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${x.total}</td><td>${x.success}</td><td>${x.fail}</td><td>${fmPctHtml(x.pct)}</td><td><b>${Math.round(x.shipments).toLocaleString()}</b></td></tr>`).join(''):`<tr><td colspan="6" class="muted">No FTP B2B FEs</td></tr>`}</tbody></table>`}const bikers=all.filter(x=>x.type==='Biker').sort((a,b)=>b.pct-a.pct||b.total-a.total||a.name.localeCompare(b.name));const regularBottom=all.filter(x=>x.type==='Regular').sort((a,b)=>a.pct-b.pct||b.total-a.total||b.fail-a.fail||a.name.localeCompare(b.name)).slice(0,5);return `<div class="fmFeSplit"><div class="fmFeGroup"><h4>Biker FE Performance (All Biker FEs)</h4>${fmFeMiniTable(bikers,'No Biker FEs in this population')}</div><div class="fmFeGroup"><h4>Regular FE – Bottom 5 Performance</h4>${fmFeMiniTable(regularBottom,'No Regular FEs in this population')}</div></div>`}
+function fmToggleFeSort(scope,key){const st=scope==='ftp'?FM.ftpFeSort:FM.feSort;if(st.key===key)st.dir=st.dir==='asc'?'desc':'asc';else{st.key=key;st.dir=(key==='name'||key==='type')?'asc':'desc'};if(scope==='ftp')document.getElementById('fmFtFE').innerHTML=fmFeTable(fmFtpRows(FM.rows),'ftp');else document.getElementById('fmFE').innerHTML=fmFeTable(FM.rows,'main')}
+function fmClientData(rows){const m=new Map();rows.forEach(r=>{const k=fmS(fmV(r,'Client'))||'Blank';if(!m.has(k))m.set(k,[]);m.get(k).push(r)});return [...m].map(([client,v])=>({client,...fmMetric(v)}))}
+function fmClientTable(rows,scope='main'){const state=scope==='ftp'?FM.ftpClientSort:FM.clientSort;const data=fmClientData(rows).filter(x=>x.fail>0);data.sort((a,b)=>{if(b.fail!==a.fail)return b.fail-a.fail;if(a.pct!==b.pct)return a.pct-b.pct;return a.client.localeCompare(b.client)});const a=data.slice(0,10);return `<table><thead><tr><th>Client</th><th>PUR Count</th><th>Picked Up + Validated</th><th>Failed</th><th>Picked Up %</th><th>Shipment Picked Count</th></tr></thead><tbody>${a.length?a.map(x=>`<tr><td>${escapeHtml(x.client)}</td><td>${x.total}</td><td>${x.success}</td><td><b>${x.fail}</b></td><td>${fmPctHtml(x.pct)}</td><td><b>${Math.round(x.shipments).toLocaleString()}</b></td></tr>`).join(''):`<tr><td colspan="6" class="muted">No failed clients</td></tr>`}</tbody></table>`}
+function fmToggleClientSort(scope,key){const st=scope==='ftp'?FM.ftpClientSort:FM.clientSort;if(st.key===key)st.dir=st.dir==='asc'?'desc':'asc';else{st.key=key;st.dir=key==='client'?'asc':'desc'};if(scope==='ftp')document.getElementById('fmFtClient').innerHTML=fmClientTable(fmFtpRows(FM.rows),'ftp');else document.getElementById('fmClient').innerHTML=fmClientTable(FM.rows,'main')}
+function fmCategory(r){const p=fmS(fmV(r,'PDT','pdt','Product Type')).toUpperCase();if(!p)return'B2C';if(p==='HEAVY')return'Heavy';if(p==='B2B')return'B2B';return p==='B2C'?'B2C':p}
+function fmFtpRows(rows){return rows.filter(r=>fmBoolYes(fmV(r,'Is First PR','Is First Pr','is first pr'))&&fmS(fmV(r,'PDT','pdt','Product Type')).toUpperCase()==='B2B')}
+function fmProductTable(rows){return `<table><thead><tr><th>Pickup Type</th><th>Total PUR Count</th><th>Picked Up + Validated</th><th>Failed</th><th>Picked Up %</th><th>Shipment Picked Count</th><th>Top Failure Reason</th></tr></thead><tbody>${['B2B','B2C','Heavy'].map(c=>{const rr=rows.filter(r=>fmCategory(r)===c),x=fmMetric(rr),ff=rr.filter(fmFailure),mm=new Map();ff.forEach(r=>mm.set(fmReason(r),(mm.get(fmReason(r))||0)+1));const top=[...mm].sort((a,b)=>b[1]-a[1])[0];return `<tr><td><b>${c}</b></td><td>${x.total}</td><td>${x.success}</td><td>${x.fail}</td><td>${fmPctHtml(x.pct)}</td><td><b>${Math.round(x.shipments).toLocaleString()}</b></td><td>${top?escapeHtml(top[0])+' ('+top[1]+')':'-'}</td></tr>`}).join('')}</tbody></table>`}
+function fmCards(x){return `<div class="card"><small>Total PUR Count</small><strong>${x.total}</strong></div><div class="card"><small>Picked Up + Validated</small><strong>${x.success}</strong><div class="muted">${x.picked} Picked Up + ${x.validated} Validated</div></div><div class="card"><div class="fmFailedHead"><small>Failed</small><button type="button" class="fmFailedEye" onclick="showFmFailedPickupIds('ftp')" title="View failed Pickup IDs" aria-label="View failed Pickup IDs">👁</button></div><strong>${x.fail}</strong><div class="muted">Final failures</div></div><div class="card"><small>Picked Up %</small><strong class="${x.pct<90?'fmPctBad':''}">${x.pct.toFixed(1)}%</strong><div class="muted">FTP B2B pickup success</div></div>`}
+function showFmFailedPickupIds(scope){const rows=scope==='ftp'?fmFtpRows(FM.rows):FM.rows;const ids=rows.filter(fmFailure).map(r=>fmS(fmV(r,'Pickup Id','Pickup ID','PickupId'))).filter(Boolean);const title=document.getElementById('fmFailedModalTitle');const body=document.getElementById('fmFailedIds');title.textContent=(scope==='ftp'?'FTP B2B':'Overall')+' Failed Pickup IDs ('+ids.length+')';body.textContent=ids.length?ids.join(', '):'No failed Pickup IDs';document.getElementById('fmFailedModal').classList.add('open')}
+function closeFmFailedPickupIds(){document.getElementById('fmFailedModal')?.classList.remove('open')}
+function fmDateObj(v){if(v instanceof Date&&!isNaN(v))return v; if(typeof v==='number'||(/^\d+(\.\d+)?$/.test(fmS(v))&&Number(v)>20000)){const n=Number(v);return new Date(Date.UTC(1899,11,30)+n*86400000)}const str=fmS(v);if(!str)return null;const d=new Date(str);return isNaN(d)?null:d}
+function fmDateLabel(v){const d=fmDateObj(v);return d?d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}):fmS(v)}
+function renderFM(){const rows=FM.rows,x=fmMetric(rows),ds=rows.map(r=>fmDateObj(fmV(r,'Pickup Date','Date'))).filter(Boolean).sort((a,b)=>a-b),first=ds[0],last=ds[ds.length-1];const center=fmS(fmV(rows[0]||{},'Delhivery Center','Delhivery center','delhivery center'))||'FM';const reportDate=!first?'':(first.getTime()===last.getTime()?fmDateLabel(first):`${fmDateLabel(first)} to ${fmDateLabel(last)}`);const titleEl=document.getElementById('fmMainTitle');if(titleEl)titleEl.textContent=`${center} FM EOD Report${reportDate?' - '+reportDate:''}`;const genEl=document.getElementById('fmGeneratedAt');if(genEl){const now=new Date();genEl.textContent='Report Generated: '+now.toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});}document.getElementById('fmDate').textContent=!first?'-':(first.getTime()===last.getTime()?fmDateLabel(first):`${fmDateLabel(first)} to ${fmDateLabel(last)}`);document.getElementById('fmTotal').textContent=x.total;document.getElementById('fmSuccessCount').textContent=x.success;const pctEl=document.getElementById('fmPickedPct');pctEl.textContent=x.pct.toFixed(1)+'%';pctEl.classList.toggle('fmPctBad',x.pct<90);document.getElementById('fmPickedDetail').textContent=`${x.picked} Picked Up + ${x.validated} Validated`;document.getElementById('fmFailDetail').textContent=`${x.failPct.toFixed(1)}% failure rate`;document.getElementById('fmFailCount').textContent=x.fail;document.getElementById('fmReasons').innerHTML=fmReasonTable(rows);document.getElementById('fmFE').innerHTML=fmFeTable(rows,'main');const ftp=fmFtpRows(rows);document.getElementById('fmFtSummary').innerHTML=fmCards(fmMetric(ftp));document.getElementById('fmFtReasons').innerHTML=fmReasonTable(ftp);document.getElementById('fmFtFE').innerHTML=fmFeTable(ftp,'ftp');document.getElementById('fmProduct').innerHTML=fmProductTable(rows);document.getElementById('fmFailureNarrative').innerHTML=fmFailureNarrativeHtml(rows);document.getElementById('fmFtpFailureNarrative').innerHTML=fmFailureNarrativeHtml(ftp);document.getElementById('fmDashboard').style.display='block'}
+async function downloadFMEODPNG(){if(!FM.rows.length)return;const dash=document.getElementById('fmDashboard');const date=document.getElementById('fmDate').textContent||'';const now=new Date();const ts=now.toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});const genEl=document.getElementById('fmGeneratedAt');if(genEl)genEl.textContent='Report Generated: '+ts;document.body.classList.add('fm-exporting');try{await new Promise(r=>setTimeout(r,120));const canvas=await html2canvas(dash,{scale:1.5,useCORS:true,backgroundColor:getComputedStyle(document.body).getPropertyValue('--bg').trim()||'#f4f7fb',windowWidth:1320,scrollX:0,scrollY:0});const a=document.createElement('a');const safe=date.replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');a.download=`FM_EOD_${safe||'Report'}.png`;a.href=canvas.toDataURL('image/png');a.click()}catch(e){console.error(e);alert('Unable to generate FM EOD PNG: '+e.message)}finally{document.body.classList.remove('fm-exporting')}}
+document.getElementById('fmFile')?.addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const st=document.getElementById('fmStatus');try{st.textContent='Loading FM file...';const data=await f.arrayBuffer();const wb=XLSX.read(data,{type:'array',cellDates:false});let rows=[];for(const name of wb.SheetNames){const rr=XLSX.utils.sheet_to_json(wb.Sheets[name],{defval:''});if(rr.some(r=>'Pickup Id'in r&&'Status'in r)){rows=rr;break}}if(!rows.length)throw new Error('No FM pickup sheet found. Required columns include Pickup Id and Status.');FM.rows=rows;renderFM();st.textContent=`Loaded ${rows.length.toLocaleString()} FM PURs from ${f.name}`;}catch(err){st.textContent='FM load failed: '+err.message;console.error(err)}});
+</script>
+
+<style>
+#fmDashboard .fmFailureNarrativeGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+#fmDashboard .fmFailureNarrative{border:1px solid #b9d1f5;background:linear-gradient(180deg,#fff,#f7faff);}
+#fmDashboard .fmKeyReasons{padding:4px 0 10px;border-bottom:1px solid #dce6f4;margin-bottom:4px;}
+#fmDashboard .fmFailureItem{padding:11px 2px;border-bottom:1px solid #dce6f4;line-height:1.45;}
+#fmDashboard .fmFailureItem:last-child{border-bottom:0;}
+#fmDashboard .fmFailureReason{font-size:14px;color:#153b6b;margin-bottom:3px;}
+#fmDashboard .fmFailureReason span{font-weight:700;color:#53657c;margin-left:5px;}
+#fmDashboard .fmQual{font-size:13px;color:#27384d;margin-bottom:4px;}
+#fmDashboard .fmClients{font-size:12.5px;color:#40536b;}
+#fmDashboard .fmNoFailure{text-align:center;padding:34px 12px;color:#1b6b3a;}
+#fmDashboard .fmCheck{width:48px;height:48px;border:3px solid #16a05d;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:28px;font-weight:800;}
+body.fm-exporting #fmDashboard .fmFailureNarrativeGrid{grid-template-columns:1fr 1fr!important;}
+@media(max-width:900px){#fmDashboard .fmFailureNarrativeGrid{grid-template-columns:1fr;}}
+</style>
+
+<div id="lmTomorrowModule" style="display:none; margin-top:14px;">
+  <iframe id="lmTomorrowFrame" title="LM - Tomorrow Load"
+          style="width:100%;height:1500px;border:0;border-radius:14px;background:#f4f7fb;"
+          loading="eager"></iframe>
+</div>
+
+<script>
+(function(){
+    const TOMORROW_LOAD_SRCDOC="<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<title>LM - Tomorrow Load</title>\n<script src=\"https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js\"><\\/script>\n<script src=\"https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js\"><\\/script>\n<style>html,body{margin:0;padding:0;background:#f4f7fb;font-family:Segoe UI,Arial,sans-serif}</style>\n<style>\n#lmRolloverModule{--line:#d9e1ea;--accent:#173f68;--muted:#687587;--bg:#f4f7fb;--card:#fff;--ink:#182230}#lmRolloverModule .lmRolloverWrap{max-width:1500px;margin:auto;padding:24px}#lmRolloverModule .head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:18px}#lmRolloverModule h1{margin:0 0 5px;font-size:25px}#lmRolloverModule .sub{color:var(--muted);font-size:13px}#lmRolloverModule .panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(20,40,70,.04)}#lmRolloverModule .uploads{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}#lmRolloverModule .upload{border:1px dashed #aebccc;border-radius:10px;padding:12px;background:#fbfdff}#lmRolloverModule .upload label{display:block;font-weight:700;font-size:13px;margin-bottom:8px}#lmRolloverModule .upload small{display:block;color:var(--muted);margin-top:7px}#lmRolloverModule input[type=file]{width:100%;font-size:12px}#lmRolloverModule .actions{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}#lmRolloverModule button{border:0;border-radius:9px;padding:10px 15px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}#lmRolloverModule .status{font-size:12px;color:var(--muted)}#lmRolloverModule .cards{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-bottom:16px}#lmRolloverModule .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}#lmRolloverModule .card .label{font-size:12px;color:var(--muted);font-weight:600}#lmRolloverModule .card .value{font-size:24px;font-weight:800;margin-top:5px}#lmRolloverModule .card.total{background:var(--accent);color:#fff}#lmRolloverModule .card.total .label{color:#dceaf7}#lmRolloverModule .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}#lmRolloverModule .toolbar h2{margin:0;font-size:17px}#lmRolloverModule select{padding:9px;border:1px solid var(--line);border-radius:8px;background:#fff}#lmRolloverModule .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}#lmRolloverModule table{width:100%;border-collapse:collapse;min-width:1050px;background:#fff}#lmRolloverModule th, #lmRolloverModule td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:right;font-size:12px}#lmRolloverModule th{background:#e8f0f7;font-weight:800;color:#25374a}#lmRolloverModule th.route, #lmRolloverModule td.route{text-align:left;font-weight:700}#lmRolloverModule #lmLoadMainTable th.b2b-head, #lmRolloverModule #lmLoadMainTable td.b2b-cell{background:#eef6ff}#lmRolloverModule #lmLoadMainTable th.b2c-head, #lmRolloverModule #lmLoadMainTable td.b2c-cell{background:#f4efff}#lmRolloverModule #lmLoadMainTable th.heavy-head, #lmRolloverModule #lmLoadMainTable td.heavy-cell{background:#eefaf3}#lmRolloverModule #lmLoadMainTable th.b2b-group{background:#dcecff;color:#174a78}#lmRolloverModule #lmLoadMainTable th.b2c-group{background:#e8dcff;color:#5b3b87}#lmRolloverModule #lmLoadMainTable th.heavy-group{background:#dcefe4;color:#276444}#lmRolloverModule #lmLoadMainTable td.total-cell{background:#f7fafc;font-weight:800}#lmRolloverModule #lmLoadMainTable td.weight-cell{background:#f2f6fa;font-weight:900}#lmRolloverModule .grand{background:#dfeaf4;font-weight:900}#lmRolloverModule .exportbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0 10px}#lmRolloverModule .exportbar button{padding:9px 13px;font-size:12px}#lmRolloverModule .pngbtn{background:#315d88}#lmRolloverModule .excelbtn{background:#26734d}#lmRolloverModule .exportbar .hint{font-size:11px;color:#6b7785}#lmRolloverModule .quality{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}#lmRolloverModule .q{padding:10px;border-radius:9px;background:#f7fafc;border:1px solid var(--line);font-size:12px}#lmRolloverModule .q b{display:block;margin-bottom:4px}#lmRolloverModule .hidden{display:none}@media(max-width:1000px){#lmRolloverModule .cards{grid-template-columns:repeat(3,1fr)}#lmRolloverModule .uploads, #lmRolloverModule .quality{grid-template-columns:1fr}#lmRolloverModule .head{flex-direction:column}}@media(max-width:600px){#lmRolloverModule .lmRolloverWrap{padding:12px}#lmRolloverModule .cards{grid-template-columns:repeat(2,1fr)}}\n#lmRolloverModule{background:var(--bg);color:var(--ink);border-radius:14px;padding:4px 0 18px}\n.logic-launch{display:flex;flex-direction:column;justify-content:space-between;gap:8px}.logicBtn{align-self:flex-start!important;background:#173f68!important;color:#fff!important;padding:9px 13px!important;font-size:12px!important}.logicModal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:22px}.logicModal.hidden{display:none!important}.logicOverlay{position:absolute;inset:0;background:rgba(10,24,40,.58);backdrop-filter:blur(2px)}.logicBox{position:relative;z-index:1;width:min(1050px,96vw);max-height:88vh;overflow:auto;background:#fff;border:1px solid #d9e1ea;border-radius:14px;box-shadow:0 20px 70px rgba(0,0,0,.25)}.logicHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:18px 20px;border-bottom:1px solid #d9e1ea;position:sticky;top:0;background:#fff;z-index:2}.logicHeader h2{margin:0;font-size:19px;color:#173f68}.logicSub{margin-top:4px;color:#687587;font-size:12px}.logicClose{background:#173f68!important;color:#fff!important;border-radius:50%!important;width:32px;height:32px;padding:0!important;font-size:22px;line-height:1}.logicGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:18px}.logicCard{border:1px solid #d9e1ea;background:#f7fafc;border-radius:10px;padding:13px}.logicCard h3{margin:0 0 7px;color:#173f68;font-size:14px}.logicCard p{margin:5px 0;color:#25374a;font-size:12px;line-height:1.45}.logicCard code{background:#e8eef5;border-radius:4px;padding:1px 4px;font-family:Consolas,monospace;font-size:11px}@media(max-width:800px){.logicGrid{grid-template-columns:1fr}.logicBox{max-height:92vh}.logicHeader{padding:14px}.logicGrid{padding:12px}}\n\n</style>\n</head>\n<body>\n<div id=\"lmRolloverModule\" class=\"lmModule\" style=\"display:block\">\n<div class=\"lmRolloverWrap\"><div class=\"head\"><div><h1>Mysore_Hebbalestate_H (Karnataka)</h1><div class=\"sub\">Upload the reports below to generate tomorrow AVTD / floor-load planning</div></div><div class=\"sub\" id=\"lmDateLabel\"></div></div>\n<div class=\"panel\"><div class=\"uploads\"><div class=\"upload\"><label>1. AVTD Report</label><input id=\"lmAvtdFile\" type=\"file\" accept=\".csv,.xlsx,.xls\"><small>Uses Main_Remarks + NSL_REMARKS for rollover, cn for facility, PIN/to_pin for route, pdt and box_count. Any record with ST containing DL is excluded completely.</small></div><div class=\"upload\"><label>2. Connected Source Files</label><input id=\"lmSrcFiles\" type=\"file\" accept=\".csv,.xlsx,.xls\" multiple><small>Upload Bangalore_Hoskote_GW, Bangalore_Nelamangla_H and additional source-center files.</small></div><div class=\"upload logic-launch\"><label>3. Dashboard Logic</label><div class=\"status\">All rollover, connected-load, shipment-ID, route, weight and exclusion rules are available here.</div><button type=\"button\" class=\"logicBtn\" onclick=\"openLogic()\">View All Logic &amp; Rules</button></div></div><div class=\"actions\"><button onclick=\"buildFromUploads()\">Build Dashboard</button><span class=\"status\" id=\"lmLoadStatus\">Please upload the AVTD report and connected source-center files, then click Build Dashboard.</span></div></div>\n<div class=\"cards hidden\" id=\"lmLoadCards\"></div><div class=\"panel hidden\" id=\"lmLoadDashboardPanel\"><div class=\"toolbar\"><h2>Route-wise / PDT-wise Load</h2><select id=\"lmLoadMode\" onchange=\"renderTable()\"><option value=\"combined\">Combined — Rollover + Connected</option><option value=\"rollover\">Rollover only</option><option value=\"connected\">Connected only</option></select></div><div class=\"exportbar\"><button class=\"pngbtn\" onclick=\"downloadTablePNG()\">⬇ Download PNG</button><button class=\"excelbtn\" onclick=\"downloadExcel()\">⬇ Download Excel</button><span class=\"hint\">Excel: raw shipment data in Combined / Rollover / In Transit sheets</span></div><div class=\"tablewrap\"><table id=\"lmLoadMainTable\"></table></div></div>\n<div class=\"panel hidden\" id=\"lmLoadQualityPanel\"></div>\n<div id=\"lmLogicModal\" class=\"logicModal hidden\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"lmLogicTitle\">\n  <div class=\"logicOverlay\" onclick=\"closeLogic()\"></div>\n  <div class=\"logicBox\">\n    <div class=\"logicHeader\"><div><h2 id=\"lmLogicTitle\">Dashboard Logic &amp; Rules</h2><div class=\"logicSub\">All rules used to calculate Tomorrow Load, route assignment, shipment counts and exports.</div></div><button type=\"button\" class=\"logicClose\" onclick=\"closeLogic()\">×</button></div>\n    <div class=\"logicGrid\">\n      <div class=\"logicCard\"><h3>Rollover</h3><p><b>Direct rollover:</b> Pending and Future NTD.</p><p><b>Post Cutoff Received - Tomorrow AVTD:</b> treated as Connected Load, not Rollover.</p><p><b>Dispatched:</b> rollover only when <code>NSL_REMARKS</code> is approved.</p></div>\n      <div class=\"logicCard\"><h3>ST = DL Exclusion</h3><p><b>Global exclusion:</b> any record where <code>ST</code> contains <code>DL</code> is excluded completely, irrespective of Main_Remarks or NSL_REMARKS.</p><p>This applies to both AVTD and connected-source records.</p></div>\n      <div class=\"logicCard\"><h3>Connected Shipment ID</h3><p>One unique shipment ID is counted per shipment.</p><p><b>Preferred:</b> Shipment Type when it is a valid whole number with more than 10 digits.</p><p><b>Fallback:</b> Master waybill number when needed. Duplicate identifiers are counted only once across rollover and connected data.</p></div>\n      <div class=\"logicCard\"><h3>Client</h3><p>The client field recognizes <code>Cl</code>, <code>CL</code>, <code>cl</code>, Client and common client-name variants.</p><p>For the AVTD report, <code>Cl</code> is treated as the Client column in exports.</p></div>\n      <div class=\"logicCard\"><h3>Product Type</h3><p>Product type is classified as <b>B2B</b>, <b>B2C</b> or <b>Heavy</b> using the available PDT / Product Type fields.</p></div>\n      <div class=\"logicCard\"><h3>Route Assignment</h3><p>Route is derived from the PIN mapping.</p><p>AVTD uses <code>to_pin</code> first, then <code>PIN</code>. Connected sources use <code>PIN</code> first, then <code>to_pin</code>.</p><p><b>Missroute + Unmapped</b> are combined into one route bucket: <b>Unmapped / Missroute</b>.</p><p>Hunsur and KR Nagar are combined into <b>Hunsur and KR Nagar</b>.</p></div>\n      <div class=\"logicCard\"><h3>Weight</h3><p>AVTD <code>wt_in_kg</code> is already in kilograms.</p><p>Connected-source <code>Space ID</code> is preferred; <code>Internal Weight</code> is used when needed. Connected weight is in grams and converted to kilograms.</p></div>\n      <div class=\"logicCard\"><h3>Box / MPS Count</h3><p>Connected data uses <b>MPS Count</b> first. <b>MPS Amount</b> is used only as a fallback when the value is a whole number.</p><p>AVTD uses <code>box_count</code>.</p></div>\n      <div class=\"logicCard\"><h3>Post-Cutoff Handling</h3><p><b>Post Cutoff Received - Tomorrow AVTD</b> is moved to Connected Load only when it passes the global ST exclusion.</p><p>If the same shipment ID already exists in connected source files, it is not counted again.</p></div>\n      <div class=\"logicCard\"><h3>Facility Filter</h3><p>AVTD rollover / post-cutoff processing is limited to <b>Mysore_Hebbalestate_H (Karnataka)</b> based on the <code>cn</code> field.</p></div>\n      <div class=\"logicCard\"><h3>Exports</h3><p>Excel provides raw shipment data in the relevant sheets, including Client, Product Type/PDT, Box/MPS count, Weight and Remarks/NSL remarks.</p><p>Route-wise exports follow the same calculation logic as the dashboard.</p></div>\n    </div>\n  </div>\n</div></div>\n<script>\nfunction buildExportRows(source){\n  const rows=[];\n  const sorted=[...ROUTES].sort((a,b)=>{\n    const ta=['B2B','B2C','Heavy'].reduce((s,p)=>s+(source[a]?.[p]?.count||0),0);\n    const tb=['B2B','B2C','Heavy'].reduce((s,p)=>s+(source[b]?.[p]?.count||0),0);\n    return tb-ta;\n  });\n  for(const r of sorted){\n    const x=source[r]||{B2B:zeroP(),B2C:zeroP(),Heavy:zeroP(),weight:0};\n    rows.push({\n      \"Route\":ROUTE_LABELS[r]||r,\n      \"B2B Count of mwn\":x.B2B.count,\"B2B Sum of box_count\":x.B2B.boxes,\n      \"B2C Count of mwn\":x.B2C.count,\"B2C Sum of box_count\":x.B2C.boxes,\n      \"Heavy Count of mwn\":x.Heavy.count,\"Heavy Sum of box_count\":x.Heavy.boxes,\n      \"Total Count of mwn\":x.B2B.count+x.B2C.count+x.Heavy.count,\n      \"Total Sum of box_count\":x.B2B.boxes+x.B2C.boxes+x.Heavy.boxes,\n      \"Final Weight (kg)\":x.weight||0\n    });\n  }\n  return rows;\n}\nfunction addExportTotal(rows){\n  const sum=k=>rows.reduce((s,r)=>s+Number(r[k]||0),0);\n  return [...rows,{\n    \"Route\":\"Grand Total\",\n    \"B2B Count of mwn\":sum(\"B2B Count of mwn\"),\"B2B Sum of box_count\":sum(\"B2B Sum of box_count\"),\n    \"B2C Count of mwn\":sum(\"B2C Count of mwn\"),\"B2C Sum of box_count\":sum(\"B2C Sum of box_count\"),\n    \"Heavy Count of mwn\":sum(\"Heavy Count of mwn\"),\"Heavy Sum of box_count\":sum(\"Heavy Sum of box_count\"),\n    \"Total Count of mwn\":sum(\"Total Count of mwn\"),\"Total Sum of box_count\":sum(\"Total Sum of box_count\"),\n    \"Final Weight (kg)\":sum(\"Final Weight (kg)\")\n  }];\n}\nfunction downloadExcel(){\n  if(!STATE || !STATE.combined){alert(\"Please build the dashboard first.\");return;}\n  try{\n    if(typeof XLSX===\"undefined\"){alert(\"Excel library could not be loaded. Refresh and try again.\");return;}\n    const wb=XLSX.utils.book_new();\n    const headers=[\"Master Waybill/MWN\",\"Client\",\"Product Type/PDT\",\"Box Count/MPS count\",\"Weight\",\"Remarks/NSL remarks\"];\n    const makeSheet=(rows)=>{\n      const aoa=[headers,...(rows||[]).map(r=>headers.map(h=>r[h]??\"\"))];\n      const ws=XLSX.utils.aoa_to_sheet(aoa);\n      ws[\"!cols\"]=[{wch:24},{wch:28},{wch:20},{wch:20},{wch:16},{wch:50}];\n      ws[\"!autofilter\"]={ref:`A1:F${Math.max(1,aoa.length)}`};\n      ws[\"!freeze\"]={xSplit:0,ySplit:1};\n      return ws;\n    };\n    XLSX.utils.book_append_sheet(wb,makeSheet(STATE.rawCombined),\"Combined\");\n    XLSX.utils.book_append_sheet(wb,makeSheet(STATE.rawRollover),\"Rollover Data\");\n    XLSX.utils.book_append_sheet(wb,makeSheet(STATE.rawConnected),\"In Transit Data\");\n    XLSX.writeFile(wb,\"Mysore_Hebbalestate_Tomorrow_Load.xlsx\");\n  }catch(e){console.error(e);alert(\"Excel download failed: \"+e.message);}\n}\nasync function downloadTablePNG(){\n  if(!STATE || !STATE.combined){alert(\"Please build the dashboard first.\");return;}\n  try{\n    if(typeof html2canvas===\"undefined\"){alert(\"PNG library could not be loaded. Refresh and try again.\");return;}\n    const panel=document.getElementById(\"lmLoadDashboardPanel\");\n    const canvas=await html2canvas(panel,{backgroundColor:\"#ffffff\",scale:2,useCORS:true,logging:false});\n    const a=document.createElement(\"a\");a.download=\"Mysore_Hebbalestate_Tomorrow_Load.png\";a.href=canvas.toDataURL(\"image/png\");\n    document.body.appendChild(a);a.click();a.remove();\n  }catch(e){console.error(e);alert(\"PNG download failed: \"+e.message);}\n}\n\n\n\n\nconst SNAPSHOT = {\"rolloverShipments\": 588, \"rolloverBoxes\": 1545, \"connectedShipments\": 302, \"connectedBoxes\": 1396, \"rolloverTable\": {\"nanjanagud\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}, \"city\": {\"B2B\": {\"count\": 43, \"boxes\": 415}, \"B2C\": {\"count\": 51, \"boxes\": 51}, \"Heavy\": {\"count\": 31, \"boxes\": 32}}, \"kuvempunagara\": {\"B2B\": {\"count\": 47, \"boxes\": 189}, \"B2C\": {\"count\": 73, \"boxes\": 74}, \"Heavy\": {\"count\": 25, \"boxes\": 32}}, \"vijayanagar\": {\"B2B\": {\"count\": 55, \"boxes\": 317}, \"B2C\": {\"count\": 80, \"boxes\": 99}, \"Heavy\": {\"count\": 44, \"boxes\": 46}}, \"srp\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}, \"kr pete\": {\"B2B\": {\"count\": 8, \"boxes\": 93}, \"B2C\": {\"count\": 16, \"boxes\": 16}, \"Heavy\": {\"count\": 16, \"boxes\": 16}}, \"hunsur and kr nagar\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}, \"unmapped\": {\"B2B\": {\"count\": 5, \"boxes\": 14}, \"B2C\": {\"count\": 1, \"boxes\": 1}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}, \"nanjanagud\": {\"B2B\": {\"count\": 14, \"boxes\": 34}, \"B2C\": {\"count\": 21, \"boxes\": 24}, \"Heavy\": {\"count\": 14, \"boxes\": 14}}, \"srirangapatna\": {\"B2B\": {\"count\": 7, \"boxes\": 40}, \"B2C\": {\"count\": 20, \"boxes\": 20}, \"Heavy\": {\"count\": 11, \"boxes\": 12}}, \"kr nagar\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 4, \"boxes\": 4}, \"Heavy\": {\"count\": 1, \"boxes\": 1}}, \"hunsur\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 1, \"boxes\": 1}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}}, \"connectedTable\": {\"nanjanagud\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}, \"city\": {\"B2B\": {\"count\": 80, \"boxes\": 262}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 5, \"boxes\": 9}}, \"kuvempunagara\": {\"B2B\": {\"count\": 76, \"boxes\": 397}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 1, \"boxes\": 2}}, \"vijayanagar\": {\"B2B\": {\"count\": 107, \"boxes\": 617}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 2, \"boxes\": 4}}, \"srp\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}, \"kr pete\": {\"B2B\": {\"count\": 9, \"boxes\": 17}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 1, \"boxes\": 3}}, \"hunsur and kr nagar\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}, \"unmapped\": {\"B2B\": {\"count\": 1, \"boxes\": 2}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}, \"nanjanagud\": {\"B2B\": {\"count\": 9, \"boxes\": 41}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 1, \"boxes\": 1}}, \"srirangapatna\": {\"B2B\": {\"count\": 10, \"boxes\": 41}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}}, \"combined\": {\"nanjanagud\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}, \"city\": {\"B2B\": {\"count\": 123, \"boxes\": 677}, \"B2C\": {\"count\": 51, \"boxes\": 51}, \"Heavy\": {\"count\": 36, \"boxes\": 41}}, \"kuvempunagara\": {\"B2B\": {\"count\": 123, \"boxes\": 586}, \"B2C\": {\"count\": 73, \"boxes\": 74}, \"Heavy\": {\"count\": 26, \"boxes\": 34}}, \"vijayanagar\": {\"B2B\": {\"count\": 162, \"boxes\": 934}, \"B2C\": {\"count\": 80, \"boxes\": 99}, \"Heavy\": {\"count\": 46, \"boxes\": 50}}, \"srp\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}, \"kr pete\": {\"B2B\": {\"count\": 17, \"boxes\": 110}, \"B2C\": {\"count\": 16, \"boxes\": 16}, \"Heavy\": {\"count\": 17, \"boxes\": 19}}, \"hunsur and kr nagar\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 0, \"boxes\": 0}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}, \"unmapped\": {\"B2B\": {\"count\": 6, \"boxes\": 16}, \"B2C\": {\"count\": 1, \"boxes\": 1}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}, \"nanjanagud\": {\"B2B\": {\"count\": 23, \"boxes\": 75}, \"B2C\": {\"count\": 21, \"boxes\": 24}, \"Heavy\": {\"count\": 15, \"boxes\": 15}}, \"srirangapatna\": {\"B2B\": {\"count\": 17, \"boxes\": 81}, \"B2C\": {\"count\": 20, \"boxes\": 20}, \"Heavy\": {\"count\": 11, \"boxes\": 12}}, \"kr nagar\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 4, \"boxes\": 4}, \"Heavy\": {\"count\": 1, \"boxes\": 1}}, \"hunsur\": {\"B2B\": {\"count\": 0, \"boxes\": 0}, \"B2C\": {\"count\": 1, \"boxes\": 1}, \"Heavy\": {\"count\": 0, \"boxes\": 0}}}, \"generated\": \"11-Aug-2026\"};\nconst ROUTES = [\"nanjanagud\",\"city\",\"kuvempunagara\",\"vijayanagar\",\"srp\",\"kr pete\",\"hunsur and kr nagar\",\"unmapped\"]; const ROUTE_LABELS = {\"nanjanagud\":\"Nanjangud\",\"city\":\"City\",\"kuvempunagara\":\"Kuvempunagara\",\"vijayanagar\":\"Vijayanagar\",\"srp\":\"srp\",\"kr pete\":\"KR Pete\",\"hunsur and kr nagar\":\"Hunsur and KR Nagar\",\"unmapped\":\"Unmapped / Missroute\"};\nconst PIN_TO_ROUTE = {\"570001\":\"city\",\"570007\":\"city\",\"570010\":\"city\",\"570011\":\"city\",\"570015\":\"city\",\"570019\":\"city\",\"570021\":\"city\",\"570025\":\"city\",\"570027\":\"city\",\"570028\":\"city\",\"570029\":\"city\",\"570004\":\"kuvempunagara\",\"570005\":\"kuvempunagara\",\"570008\":\"kuvempunagara\",\"570009\":\"kuvempunagara\",\"570014\":\"kuvempunagara\",\"570022\":\"kuvempunagara\",\"570023\":\"kuvempunagara\",\"570024\":\"kuvempunagara\",\"570026\":\"kuvempunagara\",\"570030\":\"kuvempunagara\",\"570031\":\"kuvempunagara\",\"570034\":\"kuvempunagara\",\"570002\":\"vijayanagar\",\"570003\":\"vijayanagar\",\"570006\":\"vijayanagar\",\"570012\":\"vijayanagar\",\"570013\":\"vijayanagar\",\"570016\":\"vijayanagar\",\"570017\":\"vijayanagar\",\"570018\":\"vijayanagar\",\"570020\":\"vijayanagar\",\"570033\":\"vijayanagar\",\"571130\":\"vijayanagar\",\"571186\":\"vijayanagar\",\"571606\":\"vijayanagar\",\"571607\":\"vijayanagar\",\"570032\":\"vijayanagar\",\"571103\":\"hunsur\",\"571105\":\"hunsur\",\"571189\":\"hunsur\",\"571134\":\"hunsur\",\"571106\":\"hunsur\",\"571114\":\"hunsur\",\"571603\":\"kr nagar\",\"571610\":\"kr nagar\",\"571608\":\"kr nagar\",\"571617\":\"kr nagar\",\"571604\":\"kr nagar\",\"571601\":\"kr nagar\",\"571602\":\"kr nagar\",\"571455\":\"kr pete\",\"571605\":\"kr pete\",\"571423\":\"kr pete\",\"571426\":\"kr pete\",\"571454\":\"kr pete\",\"571812\":\"kr pete\",\"571436\":\"kr pete\",\"571118\":\"nanjanagud\",\"571119\":\"nanjanagud\",\"571129\":\"nanjanagud\",\"571301\":\"nanjanagud\",\"571302\":\"nanjanagud\",\"571311\":\"nanjanagud\",\"571312\":\"nanjanagud\",\"571314\":\"nanjanagud\",\"571315\":\"nanjanagud\",\"571325\":\"nanjanagud\",\"571415\":\"srp\",\"571427\":\"srp\",\"571435\":\"srp\",\"571438\":\"srp\",\"571477\":\"srp\",\"571807\":\"srp\",\"571434\":\"srp\",\"560016\":\"missroute\"};\nconst DIRECT = new Set([\"Pending\", \"Future NTD\"]);\nconst APPROVED = new Set([\"MPS Shipment: Partial Delivery\", \"Agent remark verified\", \"Package details changed by shipper\", \"Unlock - Wrong QR Code\", \"Not attempted\", \"Recipient wants delivery at a different address\", \"Barcode/QR mismatch\", \"Shipment Received at Facility\", \"Center changed by system\", \"Consignee did not receive the Code\", \"Consignee unavailable - Permanently closed\", \"Incomplete address & contact details\", \"Code Mismatch\", \"Removed From Dispatch\", \"Added to Dispatch\", \"Reattempt as per Client's instruction\", \"Delivery Rescheduled by Customer\", \"Agent remark incorrect\", \"Dispatched for RTO\", \"Reset to Pending\", \"Code Fetched from Client\", \"Vehicle Departed\", \"Delayed due to weather conditions\", \"Payment Mode / Amt Dispute\", \"weight captured\", \"Unlock\", \"Package details changed by Delhivery\", \"Deferred Date has been set\", \"Bag Added To Trip\", \"Consignee Unavailable\", \"Documents re-shared by Client\", \"On Hold. Recipient unable to Accept Delivery\", \"Status Changed\", \"Recipient wants open delivery\", \"Out for delivery\", \"Replacement QC Failed\", \"NTD Updated\", \"Call placed to consignee\", \"Service Disruption\", \"Added to Bag\", \"Reattempt - As per NDR instructions\", \"Damaged/Used Product\"]);\n\nlet STATE = structuredClone(SNAPSHOT); STATE.rawRollover=[]; STATE.rawConnected=[]; STATE.rawCombined=[];\ndocument.getElementById('lmDateLabel').textContent = '';\n\nfunction fmt(n){return Number(n||0).toLocaleString('en-IN')} function fmtWeight(n){return Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2})}\nfunction zeroP(){return {count:0,boxes:0}}\nfunction blankTable(){const o={}; ROUTES.forEach(r=>o[r]={B2B:zeroP(),B2C:zeroP(),Heavy:zeroP(),weight:0}); return o}\n\nfunction renderCards(){\n  const c=document.getElementById('lmLoadCards');\n  const totalS=STATE.rolloverShipments+STATE.connectedShipments;\n  const totalB=STATE.rolloverBoxes+STATE.connectedBoxes;\n  const totalW=ROUTES.reduce((sum,r)=>sum+(STATE.combined[r]?.weight||0),0);\n  c.innerHTML=`\n    <div class=\"card\"><div class=\"label\">Rollover Shipments</div><div class=\"value\">${fmt(STATE.rolloverShipments)}</div></div>\n    <div class=\"card\"><div class=\"label\">Rollover Boxes</div><div class=\"value\">${fmt(STATE.rolloverBoxes)}</div></div>\n    <div class=\"card\"><div class=\"label\">Connected Shipments</div><div class=\"value\">${fmt(STATE.connectedShipments)}</div></div>\n    <div class=\"card\"><div class=\"label\">Connected Boxes / MPS</div><div class=\"value\">${fmt(STATE.connectedBoxes)}</div></div>\n    <div class=\"card total\"><div class=\"label\">Total Load — Shipments</div><div class=\"value\">${fmt(totalS)}</div></div>\n    <div class=\"card total\"><div class=\"label\">Total Load — Boxes</div><div class=\"value\">${fmt(totalB)}</div></div>\n    <div class=\"card total\"><div class=\"label\">Total Load — Weight (kg)</div><div class=\"value\">${fmtWeight(totalW)}</div></div>`;\n}\n\nfunction renderTable(){\n  const mode=document.getElementById('lmLoadMode').value;\n  const tbl=document.getElementById('lmLoadMainTable');\n  let data=blankTable();\n  const add=(src, multiplier=1)=>{\n    for(const r of ROUTES){\n      for(const p of ['B2B','B2C','Heavy']){\n        if(src[r] && src[r][p]){\n          data[r][p].count += (src[r][p].count||0)*multiplier;\n          data[r][p].boxes += (src[r][p].boxes||0)*multiplier;\n        }\n      }\n      data[r].weight += (src[r].weight||0)*multiplier;\n    }\n  };\n  if(mode==='combined') add(STATE.combined);\n  else if(mode==='rollover') add(STATE.rolloverTable);\n  else add(STATE.connectedTable);\n\n  const sortedRoutes = [...ROUTES].sort((a,b)=>{\n    const totalA = ['B2B','B2C','Heavy'].reduce((s,p)=>s+(data[a][p]?.count||0),0);\n    const totalB = ['B2B','B2C','Heavy'].reduce((s,p)=>s+(data[b][p]?.count||0),0);\n    return totalB-totalA;\n  });\n\n  let h=`<thead>\n    <tr><th rowspan=\"2\" class=\"route\">Route</th>\n      <th colspan=\"2\" class=\"b2b-group\">B2B</th><th colspan=\"2\" class=\"b2c-group\">B2C</th><th colspan=\"2\" class=\"heavy-group\">Heavy</th>\n      <th rowspan=\"2\">Total Count of mwn</th><th rowspan=\"2\">Total Sum of box_count</th><th rowspan=\"2\">Final Weight (kg)</th>\n    </tr>\n    <tr><th class=\"b2b-head\">Count of mwn</th><th class=\"b2b-head\">Sum of box_count</th><th class=\"b2c-head\">Count of mwn</th><th class=\"b2c-head\">Sum of box_count</th><th class=\"heavy-head\">Count of mwn</th><th class=\"heavy-head\">Sum of box_count</th></tr>\n  </thead><tbody>`;\n  let gc={B2B:zeroP(),B2C:zeroP(),Heavy:zeroP()};\n  let totalWeight=0;\n  for(const r of sortedRoutes){\n    const x=data[r]; let rc=0, rb=0;\n    for(const p of ['B2B','B2C','Heavy']){rc+=x[p].count;rb+=x[p].boxes;gc[p].count+=x[p].count;gc[p].boxes+=x[p].boxes}\n    totalWeight += x.weight||0;\n    h+=`<tr><td class=\"route\">${ROUTE_LABELS[r]||r}</td>\n      <td class=\"b2b-cell\">${fmt(x.B2B.count)}</td><td class=\"b2b-cell\">${fmt(x.B2B.boxes)}</td>\n      <td class=\"b2c-cell\">${fmt(x.B2C.count)}</td><td class=\"b2c-cell\">${fmt(x.B2C.boxes)}</td>\n      <td class=\"heavy-cell\">${fmt(x.Heavy.count)}</td><td class=\"heavy-cell\">${fmt(x.Heavy.boxes)}</td>\n      <td class=\"total-cell\">${fmt(rc)}</td><td class=\"total-cell\">${fmt(rb)}</td><td class=\"weight-cell\">${fmtWeight(x.weight)}</td></tr>`;\n  }\n  const tc=gc.B2B.count+gc.B2C.count+gc.Heavy.count, tb=gc.B2B.boxes+gc.B2C.boxes+gc.Heavy.boxes;\n  h+=`</tbody><tfoot><tr class=\"grand\"><td class=\"route\">Grand Total</td>\n    <td class=\"b2b-cell\">${fmt(gc.B2B.count)}</td><td class=\"b2b-cell\">${fmt(gc.B2B.boxes)}</td>\n    <td class=\"b2c-cell\">${fmt(gc.B2C.count)}</td><td class=\"b2c-cell\">${fmt(gc.B2C.boxes)}</td>\n    <td class=\"heavy-cell\">${fmt(gc.Heavy.count)}</td><td class=\"heavy-cell\">${fmt(gc.Heavy.boxes)}</td>\n    <td class=\"total-cell\">${fmt(tc)}</td><td class=\"total-cell\">${fmt(tb)}</td><td class=\"weight-cell\">${fmtWeight(totalWeight)}</td></tr></tfoot>`;\n  tbl.innerHTML=h;\n}\n\nfunction rowVal(row, names){\n  const keys=Object.keys(row);\n  for(const n of names){\n    const hit=keys.find(k=>String(k).trim().toLowerCase()===n.toLowerCase());\n    if(hit!==undefined) return row[hit];\n  }\n  return \"\";\n}\nfunction clientVal(row){\n  const direct=rowVal(row,[\n    \"Client\",\"client\",\"Cl\",\"cl\",\"CL\",\"Client Name\",\"client_name\",\"clientname\",\n    \"Client_Name\",\"ClientName\",\"client name\",\"Client Name/Code\",\n    \"Client_Name/Code\",\"client_name_code\"\n  ]);\n  if(String(direct??\"\").trim()!==\"\") return String(direct).trim();\n\n  // Fallback for report-generated header variations: choose a header\n  // whose normalized name is exactly client/clientname/client_name,\n  // or contains \"client\" without looking like an AWB/waybill field.\n  const keys=Object.keys(row);\n  const hit=keys.find(k=>{\n    const n=String(k).trim().toLowerCase().replace(/[^a-z0-9]/g,\"\");\n    return (n===\"client\" || n===\"cl\" || n===\"clientname\" || n===\"clientcode\" || n===\"clientnamecode\");\n  });\n  return hit!==undefined ? String(row[hit]??\"\").trim() : \"\";\n}\nfunction numericWeight(v){\n  if(v===null||v===undefined||String(v).trim()===\"\") return null;\n  const s=String(v).trim().replace(/,/g,\"\");\n  if(/^[-+]?\\d+(?:\\.\\d+)?$/.test(s)){\n    const n=Number(s);\n    return Number.isFinite(n) ? n : null;\n  }\n  return null;\n}\nfunction whole(v){\n  if(v===null||v===undefined||String(v).trim()===\"\") return null;\n  const s=String(v).trim();\n  if(/^\\d+(?:\\.0+)?$/.test(s)) return Number(s);\n  return null;\n}\nfunction routeFor(v){\n  const n=whole(v);\n  if(n===null) return \"unmapped\";\n  const raw=PIN_TO_ROUTE[String(Math.trunc(n))];\n  if(!raw) return \"unmapped\";\n  if(raw===\"hunsur\" || raw===\"kr nagar\") return \"hunsur and kr nagar\";\n  if(raw===\"missroute\") return \"unmapped\";\n  return raw;\n}\n\nfunction routeForAny(...values){\n  for(const v of values){\n    const route=routeFor(v);\n    if(route!==\"unmapped\") return route;\n  }\n  return \"unmapped\";\n}\n\nfunction pdtFor(row){\n  for(const names of [[\"pdt\"],[\"Product-Type\",\"Product Type\"],[\"Product Sub-Category\",\"Product Sub-Category\"]]){\n    const v=String(rowVal(row,names)||\"\").trim();\n    if([\"B2B\",\"B2C\",\"Heavy\"].includes(v)) return v;\n  }\n  return \"Unknown\";\n}\nfunction validId(row){\n  // Exactly one identifier is selected for each shipment row.\n  // Prefer Shipment Type when it contains a valid >10-digit whole number;\n  // otherwise use Master waybill number. Never count both fields from the same row.\n  const candidates=[\n    [\"Shipment Type\",\"shipment type\",\"Shipment_Type\"],\n    [\"Master waybill number\",\"Master Waybill Number\",\"master waybill number\",\"Master_waybill_number\"]\n  ];\n  for(const names of candidates){\n    const v=rowVal(row,names);\n    const n=whole(v);\n    if(n!==null){\n      const id=String(Math.trunc(n));\n      if(id.length>10) return id;\n    }\n  }\n  return null;\n}\n\nasync function readRows(file){\n  const buf=await file.arrayBuffer();\n  const wb=XLSX.read(buf,{type:'array',cellDates:false});\n  const ws=wb.Sheets[wb.SheetNames[0]];\n  return XLSX.utils.sheet_to_json(ws,{defval:\"\"});\n}\n\nfunction openLogic(){\n  const m=document.getElementById('lmLogicModal');\n  if(m){m.classList.remove('hidden');document.body.style.overflow='hidden';}\n}\nfunction closeLogic(){\n  const m=document.getElementById('lmLogicModal');\n  if(m){m.classList.add('hidden');document.body.style.overflow='';}\n}\ndocument.addEventListener('keydown',e=>{if(e.key==='Escape') closeLogic();});\n\nasync function buildFromUploads(){\n  const av= document.getElementById('lmAvtdFile').files[0];\n  const srcs=[...document.getElementById('lmSrcFiles').files];\n  if(!av || !srcs.length){document.getElementById('lmLoadStatus').textContent='Please select the AVTD report and at least one connected source file.';return}\n  document.getElementById('lmLoadStatus').textContent='Reading reports…';\n  try{\n    const avRows=await readRows(av);\n    const rollTable=blankTable();\n    let rollShipments=0, rollBoxes=0, rollSeen=new Set(), rawRollover=[], postCutoffRows=[];\n    for(const row of avRows){\n      const cn=String(rowVal(row,[\"cn\"])||\"\").trim();\n      if(cn!==\"Mysore_Hebbalestate_H (Karnataka)\") continue;\n      const main=String(rowVal(row,[\"Main_Remarks\",\"Main Remarks\"])||\"\").trim();\n      const nsl=String(rowVal(row,[\"NSL_REMARKS\",\"NSL REMARKS\"])||\"\").trim();\n      const st=String(rowVal(row,[\"st\",\"ST\",\"St\",\"Status\"])||\"\").trim(); const isDL=st.toLowerCase().includes(\"dl\");\n      // HARD EXCLUSION: any AVTD record whose ST contains DL is excluded completely, regardless of Main_Remarks/NSL_REMARKS.\n      if(isDL) continue;\n      // Post Cutoff Received - Tomorrow AVTD is Connected Load only when ST does not contain DL.\n      const isPostCutoff=(main===\"Post Cutoff Received - Tomorrow AVTD\" && !isDL);\n      const isRoll=DIRECT.has(main)||(main===\"Dispatched\"&&APPROVED.has(nsl));\n      if(!isRoll && !isPostCutoff) continue;\n      const id=String(rowVal(row,[\"mwn\",\"MWN\"])||\"\").trim();\n      if(!id || rollSeen.has(id)) continue;\n      if(isPostCutoff){ postCutoffRows.push({row,id,main,nsl}); continue; }\n      rollSeen.add(id); rollShipments++;\n      const p=pdtFor(row), route=routeForAny(rowVal(row,[\"to_pin\",\"to pin\"]), rowVal(row,[\"PIN\"]));\n      const b=whole(rowVal(row,[\"box_count\",\"box count\"]))||0; rollBoxes+=b;\n      const wt=numericWeight(rowVal(row,[\"wt_in_kg\",\"wt in kg\"]))||0;\n      rawRollover.push({\n        \"Master Waybill/MWN\": id,\n        \"Client\": clientVal(row),\n        \"Product Type/PDT\": p,\n        \"Box Count/MPS count\": b,\n        \"Weight\": wt,\n        \"Remarks/NSL remarks\": [main,nsl].filter(Boolean).join(\" | \")\n      });\n      if(!rollTable[route]) rollTable[route]={B2B:zeroP(),B2C:zeroP(),Heavy:zeroP(),weight:0};\n      rollTable[route].weight += wt;\n      if(rollTable[route][p]){rollTable[route][p].count++;rollTable[route][p].boxes+=b}\n    }\n\n    const seen=new Set(rollSeen), connTable=blankTable(); let connShipments=0, connBoxes=0, rawConnected=[];\n    for(const f of srcs){\n      const rows=await readRows(f);\n      for(const row of rows){\n        const sourceSt=String(rowVal(row,[\"st\",\"ST\",\"St\",\"Status\"])||\"\").trim();\n        if(sourceSt.toLowerCase().includes(\"dl\")) continue;\n        const id=validId(row); if(!id||seen.has(id)) continue;\n        seen.add(id); connShipments++;\n        let mps=whole(rowVal(row,[\"MPS Count\"]));\n        if(mps===null) mps=whole(rowVal(row,[\"MPS Amount\"]));\n        mps=mps||0; connBoxes+=mps;\n        let wt=numericWeight(rowVal(row,[\"Space ID\",\"SpaceID\"]));\n        if(wt===null) wt=numericWeight(rowVal(row,[\"Internal Weight\",\"InternalWeight\"]));\n        // Connected source-file weight is in grams; convert to kilograms.\n        wt=wt===null ? 0 : wt/1000;\n        const p=pdtFor(row), route=routeForAny(rowVal(row,[\"PIN\"]), rowVal(row,[\"to_pin\",\"to pin\"]));\n        rawConnected.push({\n          \"Master Waybill/MWN\": id,\n          \"Client\": clientVal(row),\n          \"Product Type/PDT\": p,\n          \"Box Count/MPS count\": mps,\n          \"Weight\": wt,\n          \"Remarks/NSL remarks\": String(rowVal(row,[\"NSL_REMARKS\",\"NSL REMARKS\",\"NSL Remarks\",\"Remarks\",\"remarks\",\"Main_Remarks\",\"Main Remarks\"])||\"\").trim()\n        });\n        if(!connTable[route]) connTable[route]={B2B:zeroP(),B2C:zeroP(),Heavy:zeroP(),weight:0};\n        connTable[route].weight += wt;\n        if(connTable[route][p]){connTable[route][p].count++;connTable[route][p].boxes+=mps}\n      }\n    }\n\n    // Post Cutoff Received - Tomorrow AVTD is treated as Connected Load, not Rollover.\n    // Add after source files so connected-source data takes precedence when the same MWN exists there.\n    for(const item of postCutoffRows){\n      const {row,id,main,nsl}=item;\n      if(seen.has(id)) continue;\n      seen.add(id); connShipments++;\n      const mps=whole(rowVal(row,[\"box_count\",\"box count\"]))||0; connBoxes+=mps;\n      const wt=numericWeight(rowVal(row,[\"wt_in_kg\",\"wt in kg\"]))||0;\n      const p=pdtFor(row), route=routeForAny(rowVal(row,[\"to_pin\",\"to pin\"]), rowVal(row,[\"PIN\"]));\n      rawConnected.push({\n        \"Master Waybill/MWN\":id, \"Client\":clientVal(row), \"Product Type/PDT\":p,\n        \"Box Count/MPS count\":mps, \"Weight\":wt, \"Remarks/NSL remarks\":[main,nsl].filter(Boolean).join(\" | \")\n      });\n      if(!connTable[route]) connTable[route]={B2B:zeroP(),B2C:zeroP(),Heavy:zeroP(),weight:0};\n      connTable[route].weight += wt;\n      if(connTable[route][p]){connTable[route][p].count++;connTable[route][p].boxes+=mps}\n    }\n\n    const combined=blankTable();\n    for(const r of ROUTES){\n      for(const p of [\"B2B\",\"B2C\",\"Heavy\"]){\n        combined[r][p].count=rollTable[r][p].count+connTable[r][p].count;\n        combined[r][p].boxes=rollTable[r][p].boxes+connTable[r][p].boxes;\n      }\n      combined[r].weight=(rollTable[r].weight||0)+(connTable[r].weight||0);\n    }\n    STATE={rolloverShipments:rollShipments,rolloverBoxes:rollBoxes,connectedShipments:connShipments,connectedBoxes:connBoxes,\n      rolloverTable:rollTable,connectedTable:connTable,combined:combined,generated:new Date().toLocaleDateString('en-IN'),\n      rawRollover:rawRollover,rawConnected:rawConnected,rawCombined:[...rawRollover,...rawConnected]};\n    renderCards();renderTable();\n    document.getElementById('lmLoadCards').classList.remove('hidden');\n    document.getElementById('lmLoadDashboardPanel').classList.remove('hidden');\n    document.getElementById('lmLoadQualityPanel').classList.remove('hidden');\n    document.getElementById('lmDateLabel').textContent = 'Generated: ' + new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});\n    document.getElementById('lmLoadStatus').textContent=`Built successfully: ${rollShipments.toLocaleString('en-IN')} rollover shipments + ${connShipments.toLocaleString('en-IN')} unique connected shipment IDs.`;\n  }catch(e){\n    console.error(e); document.getElementById('lmLoadStatus').textContent='Could not build dashboard: '+e.message;\n  }\n}\n\n\n\ndocument.getElementById('lmLoadStatus').textContent = 'Please upload the AVTD report and the connected source-center files, then click Build Dashboard.';\n\n\n<\\/script>\n</body>\n</html>";
+  function initTomorrowLoad(){
+    const frame=document.getElementById('lmTomorrowFrame');
+    if(frame && !frame.srcdoc){ const realClose='<'+'/script>'; frame.srcdoc=TOMORROW_LOAD_SRCDOC.replaceAll('<\\/script>',realClose); }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initTomorrowLoad,{once:true});
+  else initTomorrowLoad();
+})();
+</script>
+</body></html>
+<style>
+#fmDashboard .fmAnalysisGrid{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)!important;}
+body.fm-exporting #fmDashboard .fmAnalysisGrid{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)!important;}
+@media(max-width:900px){#fmDashboard .fmAnalysisGrid{grid-template-columns:1fr!important;}}
+
+/* V14 FM failed Pickup ID drill-down + FTP table cleanup */
+.fmFailedHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fmFailedEye{width:34px;height:30px;padding:0!important;border:1px solid #ef4444!important;border-radius:7px!important;background:transparent!important;color:#17365d!important;font-size:17px!important;line-height:1;cursor:pointer}
+.fmFailedEye:hover{background:#ef444412!important}
+body.dark .fmFailedEye{color:#f8fafc!important}
+#fmFtFE th:nth-child(4){white-space:nowrap!important}
+.fmFailedModal{position:fixed;inset:0;z-index:2147483647;display:none;align-items:center;justify-content:center;padding:18px;background:#0009}
+.fmFailedModal.open{display:flex!important}
+.fmFailedModalBox{width:min(760px,96vw);max-height:82vh;overflow:hidden;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:12px;box-shadow:0 24px 70px #0006}
+.fmFailedModalHead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--border)}
+.fmFailedModalHead h3{margin:0;font-size:18px}
+.fmFailedModalClose{width:34px;height:34px;padding:0!important;background:transparent!important;color:var(--text)!important;border:1px solid var(--border)!important;font-size:23px!important}
+.fmFailedIds{padding:18px;max-height:58vh;overflow:auto;white-space:normal;overflow-wrap:anywhere;line-height:1.65;font-size:14px}
+body.fm-exporting .fmFailedEye,.fm-exporting .fmFailedModal{display:none!important}
+</style>
